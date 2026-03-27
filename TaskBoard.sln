@@ -23,6 +23,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskBoard.Infrastructure.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskBoard.Api.Tests", "Tests\TaskBoard.Api.Tests\TaskBoard.Api.Tests.csproj", "{B9A97638-B559-4A54-8593-A1E96EE9629E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{9C8CB701-102D-CF49-A3E0-89AC09D42C2C}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -142,5 +147,8 @@ Global
 		{BB3F56AC-7474-4A90-B51B-332768F675C4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{FACA6B3A-5B05-479B-8467-78DB729276A2} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{B9A97638-B559-4A54-8593-A1E96EE9629E} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E7478229-0C02-4104-B5A4-84423CB5CC76}
 	EndGlobalSection
 EndGlobal

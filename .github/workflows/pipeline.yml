@@ -1,0 +1,123 @@
+name: CI-CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: 9.0.x
+  IMAGE_NAME: taskboard-api
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test (unit + integration)
+        env:
+          DOTNET_ENVIRONMENT: Test
+        run: dotnet test --no-build --configuration Release
+
+  quality:
+    runs-on: ubuntu-latest
+    needs: build-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # --- dotnet format ---
+      - name: Install dotnet-format
+        run: dotnet tool install -g dotnet-format
+
+      - name: Run dotnet format (check only)
+        run: dotnet format --verify-no-changes
+
+      # --- Analyzers ---
+      - name: Build with analyzers
+        run: dotnet build --configuration Release -warnaserror
+
+      # --- Security scan ---
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+      # --- SonarCloud (optionnel) ---
+      - name: SonarCloud Scan
+        if: secrets.SONAR_TOKEN != ''
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+  docker-build-push:
+    needs: quality
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -f src/TaskBoard.Api/Dockerfile \
+            -t ghcr.io/${{ github.repository }}/$IMAGE_NAME:latest \
+            .
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}/$IMAGE_NAME:latest
+
+  deploy:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /opt/taskboard
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker system prune -f
