@@ -253,4 +253,26 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
             docker stop taskboard-api || true
             docker rm taskboard-api || true
-            docker run -d --name taskboard-api -p 80:80 ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}   
+            docker run -d --name taskboard-api -p 80:80 ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+
+  # -----------------------------
+  # 9) DEPLOY PRODUCTION (main)
+  # -----------------------------
+  deploy-production:
+    needs: release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            docker stop taskboard-api || true
+            docker rm taskboard-api || true
+            docker run -d --name taskboard-api -p 80:80 ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
