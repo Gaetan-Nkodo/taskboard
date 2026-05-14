@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using TaskBoard.Api.Tests.integration.Setup;
 using TaskBoard.Api.Tests.Setup;
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;

@@ -1,7 +1,8 @@
-﻿using TaskBoard.Domain.Entities;
-using TaskBoard.Infrastructure.Persistence.Database;
+﻿using TaskBoard.Api.Tests.integration.Setup;
+using TaskBoard.Domain.Entities;
 using TaskBoard.Infrastructure.Persistence.Repositories;
-namespace TaskBoard.Infrastructure.Tests.Repositories;
+
+namespace TaskBoard.Api.Tests.Infrastructure.Repositories;
 
 public class UserRepositoryTests : IClassFixture<SqlServerContainerFixture>
 {

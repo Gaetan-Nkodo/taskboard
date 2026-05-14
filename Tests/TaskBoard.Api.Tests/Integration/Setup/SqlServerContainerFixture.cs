@@ -3,12 +3,14 @@ using Testcontainers.MsSql;
 using TaskBoard.Infrastructure.Persistence;
 using Xunit;
 
-namespace TaskBoard.Api.Tests.Setup;
+namespace TaskBoard.Api.Tests.integration.Setup;
 
 public class SqlServerContainerFixture : IAsyncLifetime
 {
     public MsSqlContainer Container { get; private set; } = default!;
     public string ConnectionString => Container.GetConnectionString();
+
+    public AppDbContext Db { get; private set; } = default!;
 
     public async Task InitializeAsync()
     {

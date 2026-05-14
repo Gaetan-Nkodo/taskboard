@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using TaskBoard.Api.Tests.integration.Setup;
 using TaskBoard.Api.Tests.Setup;
 using TaskBoard.Application.Requests;
 

@@ -43,10 +43,8 @@ public class DeleteBoardHandlerTests
 
         var board = new Board(ownerId, "Board");
 
-        // Le repo renvoie bien le board pour le propriétaire
         repo.GetByIdAsync(board.Id, ownerId).Returns(board);
 
-        // Mais on appelle le handler avec un autre userId
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             handler.Handle(board.Id, otherUserId));
     }
