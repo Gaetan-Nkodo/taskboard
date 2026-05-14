@@ -4,3 +4,10 @@ GET {{TaskBoard.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+POST {{TaskBoard.Api_HostAddress}}/auth/register
+Accept: application/json
+Content-Type: application/json
+{
+    "Email": "admin@admin.com",
+    "Password": "admin"
+}

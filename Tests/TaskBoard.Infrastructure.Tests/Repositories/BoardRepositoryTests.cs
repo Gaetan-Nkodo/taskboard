@@ -19,11 +19,12 @@ public class BoardRepositoryTests : IClassFixture<SqlServerContainerFixture>
         // Arrange
         var repo = new BoardRepository(_fixture.Db);
 
-        var board = new Board(Guid.NewGuid(), "My Board", "Description");
+        var userId = Guid.NewGuid();
+        var board = new Board(userId, "My Board", "Description");
 
         // Act
         await repo.AddAsync(board);
-        var loaded = await repo.GetByIdAsync(board.Id);
+        var loaded = await repo.GetByIdAsync(board.Id, userId);
 
         // Assert
         Assert.NotNull(loaded);
@@ -32,7 +33,7 @@ public class BoardRepositoryTests : IClassFixture<SqlServerContainerFixture>
     }
 
     [Fact]
-    public async Task Should_Add_Board_With_Tasks_And_Load_Them()
+    public async Task Should_Add_Board_With_Columns_And_Tasks_And_Load_Them()
     {
         // Arrange
         var repo = new BoardRepository(_fixture.Db);
@@ -40,21 +41,28 @@ public class BoardRepositoryTests : IClassFixture<SqlServerContainerFixture>
         var userId = Guid.NewGuid();
         var board = new Board(userId, "Board");
 
-        var task1 = new TaskItem(board.Id, "Task 1", "Desc 1", "📌", "Todo");
-        var task2 = new TaskItem(board.Id, "Task 2", "Desc 2", "⭐", "InProgress");
+        var col1 = board.AddColumn("In Progress", 1);
+        var col2 = board.AddColumn("Completed", 2);
 
-        board.AddTask(task1);
-        board.AddTask(task2);
+        col1.AddTask("Task 1", "Desc 1", "📌");
+        col2.AddTask("Task 2", "Desc 2", "⭐");
 
         // Act
         await repo.AddAsync(board);
-        var loaded = await repo.GetByIdAsync(board.Id);
+        var loaded = await repo.GetByIdAsync(board.Id, userId);
 
         // Assert
         Assert.NotNull(loaded);
-        Assert.Equal(2, loaded!.Tasks.Count);
-        Assert.Contains(loaded.Tasks, t => t.Name == "Task 1");
-        Assert.Contains(loaded.Tasks, t => t.Name == "Task 2");
+        Assert.Equal(2, loaded!.Columns.Count);
+
+        var loadedCol1 = loaded.Columns.First(c => c.Name == "In Progress");
+        var loadedCol2 = loaded.Columns.First(c => c.Name == "Completed");
+
+        Assert.Single(loadedCol1.Tasks);
+        Assert.Single(loadedCol2.Tasks);
+
+        Assert.Contains(loadedCol1.Tasks, t => t.Name == "Task 1");
+        Assert.Contains(loadedCol2.Tasks, t => t.Name == "Task 2");
     }
 
     [Fact]
@@ -86,14 +94,15 @@ public class BoardRepositoryTests : IClassFixture<SqlServerContainerFixture>
         // Arrange
         var repo = new BoardRepository(_fixture.Db);
 
-        var board = new Board(Guid.NewGuid(), "Old", "Old Desc");
+        var userId = Guid.NewGuid();
+        var board = new Board(userId, "Old", "Old Desc");
         await repo.AddAsync(board);
 
         // Act
         board.Update("New", "New Desc");
         await repo.UpdateAsync(board);
 
-        var loaded = await repo.GetByIdAsync(board.Id);
+        var loaded = await repo.GetByIdAsync(board.Id, userId);
 
         // Assert
         Assert.NotNull(loaded);
@@ -107,12 +116,13 @@ public class BoardRepositoryTests : IClassFixture<SqlServerContainerFixture>
         // Arrange
         var repo = new BoardRepository(_fixture.Db);
 
-        var board = new Board(Guid.NewGuid(), "Board");
+        var userId = Guid.NewGuid();
+        var board = new Board(userId, "Board");
         await repo.AddAsync(board);
 
         // Act
         await repo.DeleteAsync(board);
-        var loaded = await repo.GetByIdAsync(board.Id);
+        var loaded = await repo.GetByIdAsync(board.Id, userId);
 
         // Assert
         Assert.Null(loaded);

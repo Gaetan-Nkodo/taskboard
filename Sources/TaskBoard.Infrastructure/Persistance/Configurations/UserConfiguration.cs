@@ -12,12 +12,19 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasKey(u => u.Id);
 
-        builder.Property(u => u.Email).IsRequired().HasMaxLength(255);
+        builder.Property(u => u.Email)
+            .IsRequired()
+            .HasMaxLength(255);
 
-        builder.HasIndex(u => u.Email).IsUnique();
+        builder.HasIndex(u => u.Email)
+            .IsUnique();
 
-        builder.Property(u => u.PasswordHash).IsRequired();
+        builder.Property(u => u.PasswordHash)
+            .IsRequired();
 
-        builder.HasMany(u => u.Boards).WithOne(b => b.User!).HasForeignKey(b => b.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany<Board>()
+            .WithOne()
+            .HasForeignKey(b => b.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

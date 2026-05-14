@@ -1,45 +1,29 @@
 ﻿using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
-
-namespace TaskBoard.Domain.Tests.Entities;
+using FluentAssertions;
 
 public class TaskItemTests
 {
     [Fact]
-    public void Should_Create_TaskItem()
+    public void Update_ShouldModifyTaskProperties()
     {
-        var boardId = Guid.NewGuid();
+        var task = new TaskItem(Guid.NewGuid(), "Old", "OldDesc", "🔥", 1);
 
-        var task = new TaskItem(boardId, "Task", "Desc", "📌", "Todo");
+        task.Update("New", "NewDesc", "⭐");
 
-        Assert.Equal(boardId, task.BoardId);
-        Assert.Equal("Task", task.Name);
-        Assert.Equal("Desc", task.Description);
-        Assert.Equal("📌", task.Icon);
-        Assert.Equal("Todo", task.Status);
+        task.Name.Should().Be("New");
+        task.Description.Should().Be("NewDesc");
+        task.Icon.Should().Be("⭐");
     }
 
     [Fact]
-    public void Should_Update_TaskItem()
+    public void MoveToColumn_ShouldUpdateColumnIdAndOrder()
     {
-        var boardId = Guid.NewGuid();
-        var task = new TaskItem(boardId, "Old", "Old Desc", "📌", "Todo");
+        var task = new TaskItem(Guid.NewGuid(), "Task", null, null, 1);
 
-        task.Update("New", "New Desc", "⭐", "Done");
+        var newColumnId = Guid.NewGuid();
+        task.MoveToColumn(newColumnId, 3);
 
-        Assert.Equal("New", task.Name);
-        Assert.Equal("New Desc", task.Description);
-        Assert.Equal("⭐", task.Icon);
-        Assert.Equal("Done", task.Status);
-    }
-
-    [Fact]
-    public void Should_Throw_When_Updating_With_Invalid_Data()
-    {
-        var boardId = Guid.NewGuid();
-        var task = new TaskItem(boardId, "Task", "Desc", "📌", "Todo");
-
-        Assert.Throws<DomainException>(() =>
-            task.Update("", "Desc", "📌", "Todo"));
+        task.ColumnId.Should().Be(newColumnId);
+        task.Order.Should().Be(3);
     }
 }

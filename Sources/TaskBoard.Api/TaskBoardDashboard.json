@@ -1,0 +1,30 @@
+{
+  "title": "TaskBoard Observability Dashboard",
+  "charts": [
+    {
+      "title": "Requests per minute",
+      "type": "line",
+      "query": "select count(*) as Count from stream group by time(1m)"
+    },
+    {
+      "title": "Errors",
+      "type": "bar",
+      "query": "select count(*) as Errors from stream where @Level = 'Error' group by time(1m)"
+    },
+    {
+      "title": "Boards Activity",
+      "type": "table",
+      "query": "select @Timestamp, @Message, UserId, BoardId from stream where @Message like '%Board%'"
+    },
+    {
+      "title": "Tasks Activity",
+      "type": "table",
+      "query": "select @Timestamp, @Message, UserId, BoardId, TaskId from stream where @Message like '%Task%'"
+    },
+    {
+      "title": "Database Operations",
+      "type": "table",
+      "query": "select @Timestamp, @Message, UserId, BoardId, TaskId from stream where @Message like 'DB:%'"
+    }
+  ]
+}

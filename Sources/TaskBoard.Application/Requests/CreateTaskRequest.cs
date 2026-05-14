@@ -1,3 +1,8 @@
 ﻿namespace TaskBoard.Application.Requests;
 
-public record CreateTaskRequest(string Name, string? Description, string Icon, string Status);
+public record CreateTaskRequest(
+    Guid ColumnId,
+    string Name,
+    string? Description,
+    string? Icon
+);

@@ -3,29 +3,34 @@
 public class TaskItem
 {
     public Guid Id { get; private set; }
-    public Guid BoardId { get; private set; }
-
-    public string Name { get; private set; }
+    public Guid ColumnId { get; private set; }
+    public string Name { get; private set; } = default!;
     public string? Description { get; private set; }
-    public string Icon { get; private set; }
-    public string Status { get; private set; }
+    public string? Icon { get; private set; }
+    public int Order { get; private set; }
 
-    public TaskItem(Guid boardId, string name, string? description, string icon = "📝", string status = "En cours")
+    private TaskItem() { }
+
+    public TaskItem(Guid columnId, string name, string? description, string? icon, int order)
     {
         Id = Guid.NewGuid();
-        BoardId = boardId;
+        ColumnId = columnId;
         Name = name;
+        Description = description;
         Icon = icon;
-        Status = status;
-        if (description != null)
-            Description = description;
+        Order = order;
     }
 
-    public void Update(string name, string? description, string icon, string status)
+    public void Update(string name, string? description, string? icon)
     {
         Name = name;
         Description = description;
         Icon = icon;
-        Status = status;
+    }
+
+    public void MoveToColumn(Guid newColumnId, int newOrder)
+    {
+        ColumnId = newColumnId;
+        Order = newOrder;
     }
 }

@@ -1,32 +1,39 @@
 ﻿using TaskBoard.Application.Requests;
-using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Tasks;
 
 public class UpdateTaskHandler
 {
-    private readonly ITaskRepository _taskRepository;
+    private readonly IBoardRepository _boardRepository;
 
-    public UpdateTaskHandler(ITaskRepository taskRepository)
+    public UpdateTaskHandler(IBoardRepository boardRepository)
     {
-        _taskRepository = taskRepository;
+        _boardRepository = boardRepository;
     }
 
-    public async Task Handle(Guid taskId, UpdateTaskRequest request)
+    public async Task Handle(Guid taskId, Guid userId, UpdateTaskRequest request)
     {
-        var task = await _taskRepository.GetByIdAsync(taskId);
+        var board = await _boardRepository.GetByTaskIdAsync(taskId, userId);
+        if (board is null)
+            throw new Exception("Task not found or access denied.");
 
-        if (task is null)
-            throw new NotFoundException($"Task with ID {taskId} not found.");
+        var currentColumn = board.Columns.First(c => c.Tasks.Any(t => t.Id == taskId));
+        var task = currentColumn.Tasks.First(t => t.Id == taskId);
 
-        task.Update(
-            request.Name,
-            request.Description,
-            request.Icon,
-            request.Status
-        );
+        if (request.ColumnId != currentColumn.Id)
+        {
+            var newColumn = board.Columns.FirstOrDefault(c => c.Id == request.ColumnId);
+            if (newColumn is null)
+                throw new Exception("Target column not found.");
 
-        await _taskRepository.UpdateAsync(task);
+            var newOrder = newColumn.Tasks.Any() ? newColumn.Tasks.Max(t => t.Order) + 1 : 1;
+
+            task.MoveToColumn(newColumn.Id, newOrder);
+        }
+
+        task.Update(request.Name, request.Description, request.Icon);
+
+        await _boardRepository.UpdateAsync(board);
     }
 }

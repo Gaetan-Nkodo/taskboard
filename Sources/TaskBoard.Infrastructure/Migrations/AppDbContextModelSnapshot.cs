@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using TaskBoard.Infrastructure.Persistence;
 
 #nullable disable
 
@@ -17,12 +16,12 @@ namespace TaskBoard.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.14")
+                .HasAnnotation("ProductVersion", "9.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Board", b =>
+            modelBuilder.Entity("TaskBoard.Domain.Entities.Board", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -47,7 +46,7 @@ namespace TaskBoard.Infrastructure.Migrations
                     b.ToTable("Boards", (string)null);
                 });
 
-            modelBuilder.Entity("TaskBoard.Domain.Entities.TaskItem", b =>
+            modelBuilder.Entity("TaskBoard.Domain.Entities.Column", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -56,12 +55,35 @@ namespace TaskBoard.Infrastructure.Migrations
                     b.Property<Guid>("BoardId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId");
+
+                    b.ToTable("Columns");
+                });
+
+            modelBuilder.Entity("TaskBoard.Domain.Entities.TaskItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ColumnId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Icon")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
@@ -70,14 +92,12 @@ namespace TaskBoard.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BoardId");
+                    b.HasIndex("ColumnId");
 
                     b.ToTable("Tasks", (string)null);
                 });
@@ -90,8 +110,8 @@ namespace TaskBoard.Infrastructure.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -99,37 +119,47 @@ namespace TaskBoard.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("Board", b =>
+            modelBuilder.Entity("TaskBoard.Domain.Entities.Board", b =>
                 {
-                    b.HasOne("TaskBoard.Domain.Entities.User", "User")
-                        .WithMany("Boards")
+                    b.HasOne("TaskBoard.Domain.Entities.User", null)
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TaskBoard.Domain.Entities.TaskItem", b =>
+            modelBuilder.Entity("TaskBoard.Domain.Entities.Column", b =>
                 {
-                    b.HasOne("Board", null)
-                        .WithMany("Tasks")
+                    b.HasOne("TaskBoard.Domain.Entities.Board", null)
+                        .WithMany("Columns")
                         .HasForeignKey("BoardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Board", b =>
+            modelBuilder.Entity("TaskBoard.Domain.Entities.TaskItem", b =>
                 {
-                    b.Navigation("Tasks");
+                    b.HasOne("TaskBoard.Domain.Entities.Column", null)
+                        .WithMany("Tasks")
+                        .HasForeignKey("ColumnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("TaskBoard.Domain.Entities.User", b =>
+            modelBuilder.Entity("TaskBoard.Domain.Entities.Board", b =>
                 {
-                    b.Navigation("Boards");
+                    b.Navigation("Columns");
+                });
+
+            modelBuilder.Entity("TaskBoard.Domain.Entities.Column", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

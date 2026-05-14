@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "Nibu+ofO9iA=",
+  "dgSpecHash": "03Roq4nv5bg=",
   "success": true,
   "projectFilePath": "D:\\APIRESTFULL\\TaskBoard\\Tests\\TaskBoard.Domain.Tests\\TaskBoard.Domain.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\gaeta\\.nuget\\packages\\coverlet.collector\\6.0.2\\coverlet.collector.6.0.2.nupkg.sha512",
+    "C:\\Users\\gaeta\\.nuget\\packages\\fluentassertions\\8.10.0\\fluentassertions.8.10.0.nupkg.sha512",
     "C:\\Users\\gaeta\\.nuget\\packages\\microsoft.codecoverage\\17.12.0\\microsoft.codecoverage.17.12.0.nupkg.sha512",
     "C:\\Users\\gaeta\\.nuget\\packages\\microsoft.net.test.sdk\\17.12.0\\microsoft.net.test.sdk.17.12.0.nupkg.sha512",
     "C:\\Users\\gaeta\\.nuget\\packages\\microsoft.testplatform.objectmodel\\17.12.0\\microsoft.testplatform.objectmodel.17.12.0.nupkg.sha512",

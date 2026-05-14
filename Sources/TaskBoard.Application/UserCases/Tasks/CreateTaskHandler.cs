@@ -1,34 +1,28 @@
 ﻿using TaskBoard.Application.Requests;
-using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
-
-namespace TaskBoard.Application.UseCases.Tasks;
 
 public class CreateTaskHandler
 {
     private readonly IBoardRepository _boardRepository;
-    private readonly ITaskRepository _taskRepository;
 
-    public CreateTaskHandler(IBoardRepository boardRepository, ITaskRepository taskRepository)
+    public CreateTaskHandler(IBoardRepository boardRepository)
     {
         _boardRepository = boardRepository;
-        _taskRepository = taskRepository;
     }
 
-    public async Task<Guid> Handle(Guid boardId, CreateTaskRequest request)
+    public async Task<Guid> Handle(Guid boardId, Guid userId, CreateTaskRequest request)
     {
-        var board = await _boardRepository.GetByIdAsync(boardId);
-
+        var board = await _boardRepository.GetByIdAsync(boardId, userId);
         if (board is null)
-            throw new NotFoundException($"Board with ID {boardId} not found.");
+            throw new Exception("Board not found or access denied.");
 
-        var task = new TaskItem(boardId, request.Name, request.Description, request.Icon, request.Status);
+        var column = board.Columns.FirstOrDefault(c => c.Id == request.ColumnId);
+        if (column is null)
+            throw new Exception("Column not found.");
 
-        board.AddTask(task);
+        var task = column.AddTask(request.Name, request.Description, request.Icon);
 
-        await _taskRepository.AddAsync(task);
-
+        await _boardRepository.UpdateAsync(board);
         return task.Id;
     }
 }

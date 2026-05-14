@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Users;
-using TaskBoard.Domain.Exceptions;
 
 namespace TaskBoard.Api.Controllers;
 
 [ApiController]
-[Route("auth")]
+[Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {
     private readonly RegisterUserHandler _registerHandler;
@@ -19,13 +19,15 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
     {
-        var userId = await _registerHandler.Handle(request);
-        return CreatedAtAction(nameof(Register), new { id = userId }, new { id = userId });
+        var user = await _registerHandler.Handle(request);
+        return Ok(user);
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginUserRequest request)
     {
         var token = await _loginHandler.Handle(request);

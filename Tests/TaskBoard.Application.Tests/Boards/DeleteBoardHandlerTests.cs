@@ -17,9 +17,9 @@ public class DeleteBoardHandlerTests
         var userId = Guid.NewGuid();
         var board = new Board(userId, "Board");
 
-        repo.GetByIdAsync(board.Id).Returns(board);
+        repo.GetByIdAsync(board.Id, userId).Returns(board);
 
-        await handler.Handle(board.Id);
+        await handler.Handle(board.Id, userId);
 
         await repo.Received(1).DeleteAsync(board);
     }
@@ -31,7 +31,7 @@ public class DeleteBoardHandlerTests
         var handler = new DeleteBoardHandler(repo);
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(Guid.NewGuid()));
+            handler.Handle(Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
@@ -41,10 +41,9 @@ public class DeleteBoardHandlerTests
         var handler = new DeleteBoardHandler(repo);
 
         var board = new Board(Guid.NewGuid(), "Board");
+        repo.GetByIdAsync(board.Id, Guid.Empty).Returns(board);
 
-        repo.GetByIdAsync(board.Id).Returns(board);
-
-        await Assert.ThrowsAsync<DomainException>(() =>
-            handler.Handle(board.Id));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            handler.Handle(board.Id, Guid.NewGuid()));
     }
 }

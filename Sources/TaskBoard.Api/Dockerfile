@@ -1,33 +1,50 @@
-# Consultez https://aka.ms/customizecontainer pour savoir comment personnaliser votre conteneur de débogage et comment Visual Studio utilise ce Dockerfile pour générer vos images afin d’accélérer le débogage.
-
-# Cet index est utilisé lors de l’exécution à partir de VS en mode rapide (par défaut pour la configuration de débogage)
+# -----------------------------
+# 1) BASE RUNTIME (léger)
+# -----------------------------
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
-
-# Cette phase est utilisée pour générer le projet de service
+# -----------------------------
+# 2) BUILD STAGE (SDK)
+# -----------------------------
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Sources/TaskBoard.Api/TaskBoard.Api.csproj", "Sources/TaskBoard.Api/"]
-COPY ["Sources/TaskBoard.Domain/TaskBoard.Domain.csproj", "Sources/TaskBoard.Domain/"]
-COPY ["Sources/TaskBoard.Application/TaskBoard.Application.csproj", "Sources/TaskBoard.Application/"]
-COPY ["Sources/TaskBoard.Infrastructure/TaskBoard.Infrastructure.csproj", "Sources/TaskBoard.Infrastructure/"]
-RUN dotnet restore "./Sources/TaskBoard.Api/TaskBoard.Api.csproj"
-COPY . .
-WORKDIR "/src/Sources/TaskBoard.Api"
-RUN dotnet build "./TaskBoard.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Cette étape permet de publier le projet de service à copier dans la phase finale
+# Copier uniquement les csproj pour optimiser le cache Docker
+COPY Sources/TaskBoard.Api/TaskBoard.Api.csproj Sources/TaskBoard.Api/
+COPY Sources/TaskBoard.Domain/TaskBoard.Domain.csproj Sources/TaskBoard.Domain/
+COPY Sources/TaskBoard.Application/TaskBoard.Application.csproj Sources/TaskBoard.Application/
+COPY Sources/TaskBoard.Infrastructure/TaskBoard.Infrastructure.csproj Sources/TaskBoard.Infrastructure/
+
+# Restore (cache efficace)
+RUN dotnet restore Sources/TaskBoard.Api/TaskBoard.Api.csproj
+
+# Copier le reste du code
+COPY . .
+
+# Build
+WORKDIR /src/Sources/TaskBoard.Api
+RUN dotnet build TaskBoard.Api.csproj -c $BUILD_CONFIGURATION -o /app/build
+
+# -----------------------------
+# 3) PUBLISH STAGE
+# -----------------------------
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TaskBoard.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish TaskBoard.Api.csproj -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Cette phase est utilisée en production ou lors de l’exécution à partir de VS en mode normal (par défaut quand la configuration de débogage n’est pas utilisée)
+# -----------------------------
+# 4) FINAL RUNTIME
+# -----------------------------
 FROM base AS final
 WORKDIR /app
+
+# Copier les fichiers publiés
 COPY --from=publish /app/publish .
+
+# Sécurité : utilisateur non-root (si tu veux)
+# USER $APP_UID
+
 ENTRYPOINT ["dotnet", "TaskBoard.Api.dll"]

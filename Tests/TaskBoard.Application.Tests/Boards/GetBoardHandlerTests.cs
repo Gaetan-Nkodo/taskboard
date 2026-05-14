@@ -17,12 +17,12 @@ public class GetBoardHandlerTests
         var userId = Guid.NewGuid();
         var board = new Board(userId, "Board");
 
-        repo.GetByIdAsync(board.Id).Returns(board);
+        repo.GetByIdAsync(board.Id, userId).Returns(board);
 
-        var result = await handler.Handle(board.Id);
+        var result = await handler.Handle(board.Id, userId);
 
-        Assert.Equal(board.Id, result);
-        Assert.Equal("Board", result);
+        Assert.Equal(board.Id, result.Id);
+        Assert.Equal("Board", result.Name);
     }
 
     [Fact]
@@ -31,18 +31,10 @@ public class GetBoardHandlerTests
         var repo = Substitute.For<IBoardRepository>();
         var handler = new GetBoardHandler(repo);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(Guid.NewGuid()));
-    }
+        repo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+            .Returns((Board?)null);
 
-    [Fact]
-    public async Task Should_Throw_When_User_Does_Not_Own_Board()
-    {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new GetBoardHandler(repo);
-
-        var board = new Board(Guid.NewGuid(), "Board");
-        repo.GetByIdAsync(board.Id).Returns(board);
-
-        await Assert.ThrowsAsync<DomainException>(() => handler.Handle(board.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            handler.Handle(Guid.NewGuid(), Guid.NewGuid()));
     }
 }

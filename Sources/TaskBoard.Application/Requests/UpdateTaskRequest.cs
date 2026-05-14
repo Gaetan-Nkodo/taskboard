@@ -1,3 +1,8 @@
 ﻿namespace TaskBoard.Application.Requests;
 
-public record UpdateTaskRequest(string Name, string? Description, string Icon, string Status);
+public record UpdateTaskRequest(
+    Guid ColumnId,
+    string Name,
+    string? Description,
+    string? Icon
+);

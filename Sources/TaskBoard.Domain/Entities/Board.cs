@@ -1,18 +1,19 @@
-﻿using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
+﻿using System.Data;
+
+namespace TaskBoard.Domain.Entities;
 
 public class Board
 {
+    private readonly List<Column> _columns = new();
+
     public Guid Id { get; private set; }
     public Guid UserId { get; private set; }
-
-    public string Name { get; private set; }
+    public string Name { get; private set; } = default!;
     public string? Description { get; private set; }
 
-    private readonly List<TaskItem> _tasks = new();
-    public IReadOnlyCollection<TaskItem> Tasks => _tasks;
+    public IReadOnlyCollection<Column> Columns => _columns;
 
-    public User? User { get; private set; }
+    private Board() { }
 
     public Board(Guid userId, string name, string? description = null)
     {
@@ -22,17 +23,17 @@ public class Board
         Description = description;
     }
 
+    public Column AddColumn(string name, int order)
+    {
+        var column = new Column(Id, name, order);
+        _columns.Add(column);
+        return column;
+    }
+
     public void Update(string name, string? description)
     {
         Name = name;
         Description = description;
     }
 
-    public void AddTask(TaskItem task)
-    {
-        if (task.BoardId != Id)
-            throw new DomainException("Task does not belong to this board.");
-
-        _tasks.Add(task);
-    }
 }

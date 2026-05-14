@@ -1,45 +1,53 @@
-﻿using NSubstitute;
+﻿using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Application.Requests;
-using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
-
-namespace TaskBoard.Application.Tests.Tasks;
+using Moq;
+using FluentAssertions;
 
 public class UpdateTaskHandlerTests
 {
     [Fact]
-    public async Task Should_Update_Task()
+    public async Task Handle_ShouldUpdateTaskProperties()
     {
-        var repo = Substitute.For<ITaskRepository>();
-        var handler = new UpdateTaskHandler(repo);
+        var board = new Board(Guid.NewGuid(), "Board", null);
+        var column = board.AddColumn("In Progress", 1);
+        var task = column.AddTask("Old", "OldDesc", "🔥");
 
-        var task = new TaskItem(Guid.NewGuid(), "Old", "Old Desc", "📌", "Todo");
+        var repo = new Mock<IBoardRepository>();
+        repo.Setup(r => r.GetByTaskIdAsync(task.Id, board.UserId))
+            .ReturnsAsync(board);
 
-        repo.GetByIdAsync(task.Id).Returns(task);
+        var handler = new UpdateTaskHandler(repo.Object);
 
-        var request = new UpdateTaskRequest("New", "New Desc", "⭐", "Done");
+        var request = new UpdateTaskRequest(column.Id, "New", "NewDesc", "⭐");
 
-        await handler.Handle(task.Id, request);
+        await handler.Handle(task.Id, board.UserId, request);
 
-        await repo.Received(1).UpdateAsync(task);
-
-        Assert.Equal("New", task.Name);
-        Assert.Equal("New Desc", task.Description);
-        Assert.Equal("⭐", task.Icon);
-        Assert.Equal("Done", task.Status);
+        task.Name.Should().Be("New");
+        task.Description.Should().Be("NewDesc");
+        task.Icon.Should().Be("⭐");
     }
 
     [Fact]
-    public async Task Should_Throw_When_Task_Not_Found()
+    public async Task Handle_ShouldMoveTaskToAnotherColumn()
     {
-        var repo = Substitute.For<ITaskRepository>();
-        var handler = new UpdateTaskHandler(repo);
+        var board = new Board(Guid.NewGuid(), "Board", null);
+        var col1 = board.AddColumn("In Progress", 1);
+        var col2 = board.AddColumn("Completed", 2);
 
-        var request = new UpdateTaskRequest("Name", "Desc", "📌", "Todo");
+        var task = col1.AddTask("Task");
 
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(Guid.NewGuid(), request));
+        var repo = new Mock<IBoardRepository>();
+        repo.Setup(r => r.GetByTaskIdAsync(task.Id, board.UserId))
+            .ReturnsAsync(board);
+
+        var handler = new UpdateTaskHandler(repo.Object);
+
+        var request = new UpdateTaskRequest(col2.Id, "Task", null, null);
+
+        await handler.Handle(task.Id, board.UserId, request);
+
+        task.ColumnId.Should().Be(col2.Id);
     }
 }

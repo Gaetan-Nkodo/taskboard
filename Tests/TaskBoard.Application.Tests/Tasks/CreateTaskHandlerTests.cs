@@ -1,29 +1,28 @@
-﻿using NSubstitute;
+﻿using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Application.Requests;
-using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
-
-namespace TaskBoard.Application.Tests.Tasks;
+using Moq;
+using FluentAssertions;
 
 public class CreateTaskHandlerTests
 {
     [Fact]
-    public async Task Should_Create_Task()
+    public async Task Handle_ShouldAddTaskToColumn()
     {
-        var boardRepo = Substitute.For<IBoardRepository>();
-        var taskRepo = Substitute.For<ITaskRepository>();
+        var board = new Board(Guid.NewGuid(), "Board", null);
+        var column = board.AddColumn("In Progress", 1);
 
-        var handler = new CreateTaskHandler(boardRepo, taskRepo);
+        var repo = new Mock<IBoardRepository>();
+        repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .ReturnsAsync(board);
 
-        var board = new Board(Guid.NewGuid(), "Board");
-        boardRepo.GetByIdAsync(board.Id).Returns(board);
+        var handler = new CreateTaskHandler(repo.Object);
 
-        var request = new CreateTaskRequest("Task", "Desc", "📌", "Todo");
+        var request = new CreateTaskRequest(column.Id, "Task", "Desc", "🔥");
 
-        var id = await handler.Handle(board.Id, request);
+        var taskId = await handler.Handle(board.Id, board.UserId, request);
 
-        await taskRepo.Received(1).AddAsync(Arg.Any<TaskItem>());
+        column.Tasks.Should().ContainSingle(t => t.Id == taskId);
     }
 }

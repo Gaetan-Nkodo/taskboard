@@ -18,11 +18,11 @@ public class UpdateBoardHandlerTests
         var userId = Guid.NewGuid();
         var board = new Board(userId, "Old Name", "Old Desc");
 
-        repo.GetByIdAsync(board.Id).Returns(board);
+        repo.GetByIdAsync(board.Id, userId).Returns(board);
 
         var request = new UpdateBoardRequest("New Name", "New Desc");
 
-        await handler.Handle(board.Id, request);
+        await handler.Handle(board.Id, userId, request);
 
         await repo.Received(1).UpdateAsync(board);
         Assert.Equal("New Name", board.Name);
@@ -35,24 +35,12 @@ public class UpdateBoardHandlerTests
         var repo = Substitute.For<IBoardRepository>();
         var handler = new UpdateBoardHandler(repo);
 
+        repo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+            .Returns((Board?)null);
+
         var request = new UpdateBoardRequest("Name", "Desc");
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(Guid.NewGuid(), request));
-    }
-
-    [Fact]
-    public async Task Should_Throw_When_User_Does_Not_Own_Board()
-    {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new UpdateBoardHandler(repo);
-
-        var board = new Board(Guid.NewGuid(), "Board");
-
-        repo.GetByIdAsync(board.Id).Returns(board);
-
-        var request = new UpdateBoardRequest("Name", "Desc");
-
-        await Assert.ThrowsAsync<DomainException>(() => handler.Handle(board.Id, request));
+            handler.Handle(Guid.NewGuid(), Guid.NewGuid(), request));
     }
 }

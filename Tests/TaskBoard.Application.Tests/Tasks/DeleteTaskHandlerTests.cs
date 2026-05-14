@@ -1,35 +1,26 @@
-﻿using NSubstitute;
-using TaskBoard.Application.UseCases.Tasks;
+﻿using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
-
-namespace TaskBoard.Application.Tests.Tasks;
+using Moq;
+using FluentAssertions;
 
 public class DeleteTaskHandlerTests
 {
     [Fact]
-    public async Task Should_Delete_Task()
+    public async Task Handle_ShouldRemoveTaskFromColumn()
     {
-        var repo = Substitute.For<ITaskRepository>();
-        var handler = new DeleteTaskHandler(repo);
+        var board = new Board(Guid.NewGuid(), "Board", null);
+        var column = board.AddColumn("In Progress", 1);
+        var task = column.AddTask("Task");
 
-        var task = new TaskItem(Guid.NewGuid(), "Task", "Desc", "📌", "Todo");
+        var repo = new Mock<IBoardRepository>();
+        repo.Setup(r => r.GetByTaskIdAsync(task.Id, board.UserId))
+            .ReturnsAsync(board);
 
-        repo.GetByIdAsync(task.Id).Returns(task);
+        var handler = new DeleteTaskHandler(repo.Object);
 
-        await handler.Handle(task.Id);
+        await handler.Handle(task.Id, board.UserId);
 
-        await repo.Received(1).DeleteAsync(task);
-    }
-
-    [Fact]
-    public async Task Should_Throw_When_Task_Not_Found()
-    {
-        var repo = Substitute.For<ITaskRepository>();
-        var handler = new DeleteTaskHandler(repo);
-
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(Guid.NewGuid()));
+        column.Tasks.Should().BeEmpty();
     }
 }
