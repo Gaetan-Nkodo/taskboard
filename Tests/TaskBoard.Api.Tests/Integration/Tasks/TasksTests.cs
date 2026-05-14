@@ -90,8 +90,8 @@ public class TasksTests : IClassFixture<SqlServerContainerFixture>
 
         var columns = board!["columns"] as IEnumerable<object>;
         var tasks = columns!.SelectMany(c =>
-            ((Dictionary<string, object>)c)["tasks"] as IEnumerable<object>
-        );
+        ((Dictionary<string, object>)c)["tasks"] as IEnumerable<object>
+        ?? Enumerable.Empty<object>()).ToList();
 
         Assert.Contains(tasks!, t => t.ToString()!.Contains("New"));
     }
@@ -118,9 +118,9 @@ public class TasksTests : IClassFixture<SqlServerContainerFixture>
         var board = await boardResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
 
         var columns = board!["columns"] as IEnumerable<object>;
-        var tasks = columns!.SelectMany(c =>
-            ((Dictionary<string, object>)c)["tasks"] as IEnumerable<object>
-        );
+        var tasks = columns!.SelectMany(c =>((Dictionary<string, object>)c)["tasks"] as IEnumerable<object>
+                ?? Enumerable.Empty<object>()).ToList();
+
 
         Assert.DoesNotContain(tasks!, t => t.ToString()!.Contains(taskId.ToString()));
     }

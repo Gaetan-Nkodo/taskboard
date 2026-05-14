@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Testcontainers.MsSql;
 using TaskBoard.Infrastructure.Persistence;
+using Xunit;
 
 namespace TaskBoard.IntegrationTests.Database;
 
@@ -12,12 +13,12 @@ public class SqlServerContainerFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // API Testcontainers v3 — version propre et non obsolète
-        Container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-            .WithPassword("Your_password123")
-            .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithEnvironment("MSSQL_PID", "Developer")
-            .Build();
+        Container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
+                        .WithPassword("Your_password123")
+                        .WithEnvironment("ACCEPT_EULA", "Y")
+                        .WithEnvironment("MSSQL_PID", "Developer")
+                        .Build();
+
 
         await Container.StartAsync();
 
