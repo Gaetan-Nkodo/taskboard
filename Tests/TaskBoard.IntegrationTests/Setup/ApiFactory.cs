@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using System.Linq;
-using TaskBoard.Infrastructure.Persistence;
 
 namespace TaskBoard.Api.Tests.Integration.Setup;
 

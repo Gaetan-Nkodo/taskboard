@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using TaskBoard.Infrastructure.Persistence;
 using Testcontainers.MsSql;
 using Xunit;
 
