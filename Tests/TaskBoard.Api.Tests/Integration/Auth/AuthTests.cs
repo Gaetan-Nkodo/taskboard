@@ -1,6 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using TaskBoard.Api.Tests.Integration.Setup;
+using TaskBoard.Api.Tests.Setup;
 using TaskBoard.Application.Requests;
 
 namespace TaskBoard.Api.Tests.Integration.Auth;

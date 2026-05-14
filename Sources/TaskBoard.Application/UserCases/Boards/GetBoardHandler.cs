@@ -1,5 +1,4 @@
 ﻿using TaskBoard.Application.DTOs;
-using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Boards;
 
@@ -15,8 +14,9 @@ public class GetBoardHandler
     public async Task<BoardDto> Handle(Guid boardId, Guid userId)
     {
         var board = await _boardRepository.GetByIdAsync(boardId, userId);
+
         if (board is null)
-            throw new Exception("Board not found or access denied.");
+            throw new NotFoundException($"Board with ID {boardId} not found.");
 
         var columns = board.Columns
             .OrderBy(c => c.Order)

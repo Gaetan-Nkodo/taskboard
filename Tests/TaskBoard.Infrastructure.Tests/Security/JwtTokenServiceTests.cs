@@ -10,13 +10,16 @@ public class JwtTokenServiceTests
     {
         var settings = new Dictionary<string, string?>
         {
-            { "Jwt:Key", "TEST_SECRET_KEY_123456789" },
+            // Clé HMAC HS256 : au moins 32 caractères
+            { "Jwt:Key", "THIS_IS_A_32_BYTE_MINIMUM_SECRET_KEY" },
             { "Jwt:Issuer", "TestIssuer" },
             { "Jwt:Audience", "TestAudience" },
             { "Jwt:ExpiresMinutes", "60" }
         };
 
-        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(settings)
+            .Build();
 
         var service = new JwtTokenService(config);
 

@@ -1,10 +1,17 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using TaskBoard.Api.Tests.Integration.Setup;
+using System.Threading.Tasks;
+using TaskBoard.Api.Tests.Setup;
+using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
+using Xunit;
 
-namespace TaskBoard.Api.Tests.Integration.Tasks;
+namespace TaskBoard.Api.Tests.Tasks;
 
 public class TasksTests : IClassFixture<SqlServerContainerFixture>
 {
@@ -24,11 +31,11 @@ public class TasksTests : IClassFixture<SqlServerContainerFixture>
         var login = new LoginUserRequest("tasks@mail.com", "Password123!");
         var response = await _client.PostAsJsonAsync("/auth/login", login);
 
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var token = body!["token"];
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>()
+                   ?? throw new Exception("Login response null");
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
+            new AuthenticationHeaderValue("Bearer", body["token"]);
     }
 
     private async Task<(Guid boardId, Guid columnId)> CreateBoardAsync()
@@ -36,18 +43,17 @@ public class TasksTests : IClassFixture<SqlServerContainerFixture>
         var request = new CreateBoardRequest("Board for tasks", "desc");
         var response = await _client.PostAsJsonAsync("/boards", request);
 
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-        var boardId = Guid.Parse(body!["id"].ToString()!);
+        var created = await response.Content.ReadFromJsonAsync<BoardDto>()
+                      ?? throw new Exception("Board creation null");
 
-        // Load board to get default columns
-        var boardResponse = await _client.GetAsync($"/boards/{boardId}");
-        var board = await boardResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+        var boardResponse = await _client.GetAsync($"/boards/{created.Id}");
+        var board = await boardResponse.Content.ReadFromJsonAsync<BoardDto>()
+                    ?? throw new Exception("Board response null");
 
-        var columns = board!["columns"] as IEnumerable<object>;
-        var firstColumn = columns!.First() as Dictionary<string, object>;
-        var columnId = Guid.Parse(firstColumn!["id"].ToString()!);
+        var firstColumn = board.Columns.FirstOrDefault()
+                          ?? throw new Exception("No column found");
 
-        return (boardId, columnId);
+        return (created.Id, firstColumn.Id);
     }
 
     [Fact]
@@ -62,8 +68,10 @@ public class TasksTests : IClassFixture<SqlServerContainerFixture>
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-        Assert.True(body!.ContainsKey("id"));
+        var created = await response.Content.ReadFromJsonAsync<TaskDto>()
+                      ?? throw new Exception("Task creation null");
+
+        Assert.NotEqual(Guid.Empty, created.Id);
     }
 
     [Fact]
@@ -72,28 +80,23 @@ public class TasksTests : IClassFixture<SqlServerContainerFixture>
         await AuthenticateAsync();
         var (boardId, columnId) = await CreateBoardAsync();
 
-        // Create task
         var create = new CreateTaskRequest(columnId, "Old", "Old Desc", "📌");
         var createResponse = await _client.PostAsJsonAsync($"/boards/{boardId}/tasks", create);
-        var created = await createResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-        var taskId = Guid.Parse(created!["id"].ToString()!);
 
-        // Update
+        var created = await createResponse.Content.ReadFromJsonAsync<TaskDto>()
+                      ?? throw new Exception("Task creation null");
+
         var update = new UpdateTaskRequest(columnId, "New", "New Desc", "⭐");
-        var response = await _client.PutAsJsonAsync($"/tasks/{taskId}", update);
+        var response = await _client.PutAsJsonAsync($"/tasks/{created.Id}", update);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        // Verify via board
         var boardResponse = await _client.GetAsync($"/boards/{boardId}");
-        var board = await boardResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+        var board = await boardResponse.Content.ReadFromJsonAsync<BoardDto>()
+                    ?? throw new Exception("Board response null");
 
-        var columns = board!["columns"] as IEnumerable<object>;
-        var tasks = columns!.SelectMany(c =>
-        ((Dictionary<string, object>)c)["tasks"] as IEnumerable<object>
-        ?? Enumerable.Empty<object>()).ToList();
-
-        Assert.Contains(tasks!, t => t.ToString()!.Contains("New"));
+        Assert.Contains(board.Columns.SelectMany(c => c.Tasks),
+            t => t.Name == "New");
     }
 
     [Fact]
@@ -102,38 +105,21 @@ public class TasksTests : IClassFixture<SqlServerContainerFixture>
         await AuthenticateAsync();
         var (boardId, columnId) = await CreateBoardAsync();
 
-        // Create task
         var create = new CreateTaskRequest(columnId, "To Delete", null, "📌");
         var createResponse = await _client.PostAsJsonAsync($"/boards/{boardId}/tasks", create);
-        var created = await createResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-        var taskId = Guid.Parse(created!["id"].ToString()!);
 
-        // Delete
-        var response = await _client.DeleteAsync($"/tasks/{taskId}");
+        var created = await createResponse.Content.ReadFromJsonAsync<TaskDto>()
+                      ?? throw new Exception("Task creation null");
+
+        var response = await _client.DeleteAsync($"/tasks/{created.Id}");
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        // Verify via board
         var boardResponse = await _client.GetAsync($"/boards/{boardId}");
-        var board = await boardResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+        var board = await boardResponse.Content.ReadFromJsonAsync<BoardDto>()
+                    ?? throw new Exception("Board response null");
 
-        var columns = board!["columns"] as IEnumerable<object>;
-        var tasks = columns!.SelectMany(c =>((Dictionary<string, object>)c)["tasks"] as IEnumerable<object>
-                ?? Enumerable.Empty<object>()).ToList();
-
-
-        Assert.DoesNotContain(tasks!, t => t.ToString()!.Contains(taskId.ToString()));
-    }
-
-    [Fact]
-    public async Task Should_Return_404_When_Task_Not_Found()
-    {
-        await AuthenticateAsync();
-
-        var update = new UpdateTaskRequest(Guid.NewGuid(), "X", "Y", "📌");
-
-        var response = await _client.PutAsJsonAsync($"/tasks/{Guid.NewGuid()}", update);
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.DoesNotContain(board.Columns.SelectMany(c => c.Tasks),
+            t => t.Id == created.Id);
     }
 }

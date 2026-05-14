@@ -3,7 +3,7 @@ using Testcontainers.MsSql;
 using TaskBoard.Infrastructure.Persistence;
 using Xunit;
 
-namespace TaskBoard.Api.Tests.Integration.Setup;
+namespace TaskBoard.Api.Tests.Setup;
 
 public class SqlServerContainerFixture : IAsyncLifetime
 {

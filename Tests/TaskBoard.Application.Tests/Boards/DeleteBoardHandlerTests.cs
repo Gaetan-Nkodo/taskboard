@@ -1,8 +1,6 @@
 ﻿using NSubstitute;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
-using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.Tests.Boards;
 
@@ -40,10 +38,16 @@ public class DeleteBoardHandlerTests
         var repo = Substitute.For<IBoardRepository>();
         var handler = new DeleteBoardHandler(repo);
 
-        var board = new Board(Guid.NewGuid(), "Board");
-        repo.GetByIdAsync(board.Id, Guid.Empty).Returns(board);
+        var ownerId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
 
+        var board = new Board(ownerId, "Board");
+
+        // Le repo renvoie bien le board pour le propriétaire
+        repo.GetByIdAsync(board.Id, ownerId).Returns(board);
+
+        // Mais on appelle le handler avec un autre userId
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            handler.Handle(board.Id, Guid.NewGuid()));
+            handler.Handle(board.Id, otherUserId));
     }
 }

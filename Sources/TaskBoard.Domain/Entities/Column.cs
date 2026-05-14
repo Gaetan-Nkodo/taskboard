@@ -29,8 +29,11 @@ public class Column
         return task;
     }
 
-    public void Update(string name)
+    public void RemoveTask(Guid taskId)
     {
-        Name = name;
+        var task = _tasks.FirstOrDefault(t => t.Id == taskId);
+        if (task is not null)
+            _tasks.Remove(task);
     }
+
 }

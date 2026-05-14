@@ -2,7 +2,7 @@
   {
     "ContainingType": "TaskBoard.Api.Controllers.AuthController",
     "Method": "Login",
-    "RelativePath": "auth/login",
+    "RelativePath": "api/v1/auth/login",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -18,7 +18,7 @@
   {
     "ContainingType": "TaskBoard.Api.Controllers.AuthController",
     "Method": "Register",
-    "RelativePath": "auth/register",
+    "RelativePath": "api/v1/auth/register",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -34,7 +34,7 @@
   {
     "ContainingType": "TaskBoard.Api.Controllers.BoardsController",
     "Method": "GetBoards",
-    "RelativePath": "boards",
+    "RelativePath": "api/v1/boards",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -44,7 +44,7 @@
   {
     "ContainingType": "TaskBoard.Api.Controllers.BoardsController",
     "Method": "CreateBoard",
-    "RelativePath": "boards",
+    "RelativePath": "api/v1/boards",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -59,8 +59,29 @@
   },
   {
     "ContainingType": "TaskBoard.Api.Controllers.BoardsController",
+    "Method": "CreateTask",
+    "RelativePath": "api/v1/boards/{boardId}/tasks",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "boardId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "TaskBoard.Application.Requests.CreateTaskRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TaskBoard.Api.Controllers.BoardsController",
     "Method": "GetBoard",
-    "RelativePath": "boards/{id}",
+    "RelativePath": "api/v1/boards/{id}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -76,7 +97,7 @@
   {
     "ContainingType": "TaskBoard.Api.Controllers.BoardsController",
     "Method": "UpdateBoard",
-    "RelativePath": "boards/{id}",
+    "RelativePath": "api/v1/boards/{id}",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
@@ -97,7 +118,7 @@
   {
     "ContainingType": "TaskBoard.Api.Controllers.BoardsController",
     "Method": "DeleteBoard",
-    "RelativePath": "boards/{id}",
+    "RelativePath": "api/v1/boards/{id}",
     "HttpMethod": "DELETE",
     "IsController": true,
     "Order": 0,
@@ -112,29 +133,8 @@
   },
   {
     "ContainingType": "TaskBoard.Api.Controllers.TasksController",
-    "Method": "CreateTask",
-    "RelativePath": "tasks/{boardId}",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "boardId",
-        "Type": "System.Guid",
-        "IsRequired": true
-      },
-      {
-        "Name": "request",
-        "Type": "TaskBoard.Application.Requests.CreateTaskRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "TaskBoard.Api.Controllers.TasksController",
     "Method": "UpdateTask",
-    "RelativePath": "tasks/{taskId}",
+    "RelativePath": "api/v1/tasks/{taskId}",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
@@ -155,7 +155,7 @@
   {
     "ContainingType": "TaskBoard.Api.Controllers.TasksController",
     "Method": "DeleteTask",
-    "RelativePath": "tasks/{taskId}",
+    "RelativePath": "api/v1/tasks/{taskId}",
     "HttpMethod": "DELETE",
     "IsController": true,
     "Order": 0,

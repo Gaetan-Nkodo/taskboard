@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
-using TaskBoard.Infrastructure.Persistence;
+using System.Linq;
 
-namespace TaskBoard.Api.Tests.Integration.Setup;
+namespace TaskBoard.Api.Tests.Setup;
 
 public class ApiFactory : WebApplicationFactory<Program>
 {
@@ -20,13 +20,16 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            // Remove existing DbContext
-            var descriptor = services.Single(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+            // Supprime l'ancien DbContext
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
 
-            services.Remove(descriptor);
+            if (descriptor != null)
+                services.Remove(descriptor);
 
-            // Replace with Testcontainers SQL Server
-            services.AddDbContext<AppDbContext>(options => options.UseSqlServer(_connectionString));
+            // Ajoute le DbContext avec la connection Testcontainers
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(_connectionString));
         });
     }
 }
