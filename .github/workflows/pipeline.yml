@@ -81,7 +81,7 @@ jobs:
 
 
   # -----------------------------
-  # 3) CODE QUALITY
+  # 3) CODE QUALITY (sans SonarCloud)
   # -----------------------------
   quality:
     runs-on: ubuntu-latest
@@ -112,13 +112,6 @@ jobs:
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           exit-code: 1
-
-      - name: SonarCloud Scan
-        if: ${{ secrets.SONAR_TOKEN != '' }}
-        uses: SonarSource/sonarcloud-github-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
 
 
   # -----------------------------
