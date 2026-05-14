@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using TaskBoard.IntegrationTests.Database;
-using TaskBoard.IntegrationTests.Setup;
+using TaskBoard.Api.Tests.Integration.Setup;
 using Xunit;
 
 public class BoardsTests : IClassFixture<SqlServerContainerFixture>

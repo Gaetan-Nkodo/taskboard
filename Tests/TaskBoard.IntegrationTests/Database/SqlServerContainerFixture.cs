@@ -1,40 +1,41 @@
-﻿using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using TaskBoard.Infrastructure.Persistence;
 using Testcontainers.MsSql;
+using Xunit;
 
-namespace TaskBoard.IntegrationTests.Database;
+namespace TaskBoard.Api.Tests.Integration.Setup;
 
 public class SqlServerContainerFixture : IAsyncLifetime
 {
     public MsSqlContainer Container { get; private set; } = default!;
-    public AppDbContext Db { get; private set; } = default!;
     public string ConnectionString => Container.GetConnectionString();
 
     public async Task InitializeAsync()
     {
         Container = new MsSqlBuilder()
             .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-            .WithPassword("StrongPassword123!")
+            .WithPassword("Your_password123")
+            .WithEnvironment("ACCEPT_EULA", "Y")
+            .WithEnvironment("MSSQL_PID", "Developer")
             .Build();
 
         await Container.StartAsync();
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlServer(Container.GetConnectionString())
+            .UseSqlServer(ConnectionString)
             .Options;
 
-        Db = new AppDbContext(options);
-
-        // Applique les migrations automatiquement
-        await Db.Database.MigrateAsync();
+        using var db = new AppDbContext(options);
+        await db.Database.EnsureCreatedAsync();
     }
 
     public async Task DisposeAsync()
     {
-        await Container.StopAsync();
-        await Container.DisposeAsync();
+        if (Container is not null)
+        {
+            await Container.StopAsync();
+            await Container.DisposeAsync();
+        }
     }
 }
