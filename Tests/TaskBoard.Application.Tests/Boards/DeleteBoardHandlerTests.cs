@@ -1,51 +1,60 @@
-﻿using NSubstitute;
+﻿using FluentAssertions;
+using NSubstitute;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Domain.Entities;
+using TaskBoard.Domain.Exceptions;
+using TaskBoard.Domain.Interfaces;
+using Xunit;
 
 namespace TaskBoard.Application.Tests.Boards;
 
 public class DeleteBoardHandlerTests
 {
-    [Fact]
-    public async Task Should_Delete_Board_When_User_Owns_It()
-    {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new DeleteBoardHandler(repo);
+    private readonly IBoardRepository _boardRepository = Substitute.For<IBoardRepository>();
 
+    [Fact]
+    public async Task Handle_ShouldDeleteBoard_WhenUserOwnsBoard()
+    {
+        // Arrange
         var userId = Guid.NewGuid();
         var board = new Board(userId, "Board");
 
-        repo.GetByIdAsync(board.Id, userId).Returns(board);
+        _boardRepository.GetByIdAsync(board.Id, userId).Returns(board);
 
+        var handler = new DeleteBoardHandler(_boardRepository);
+
+        // Act
         await handler.Handle(board.Id, userId);
 
-        await repo.Received(1).DeleteAsync(board);
+        // Assert
+        await _boardRepository.Received(1).DeleteAsync(board);
     }
 
     [Fact]
-    public async Task Should_Throw_When_Board_Not_Found()
+    public async Task Handle_ShouldThrow_WhenBoardNotFound()
     {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new DeleteBoardHandler(repo);
+        _boardRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+            .Returns((Board?)null);
 
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(Guid.NewGuid(), Guid.NewGuid()));
+        var handler = new DeleteBoardHandler(_boardRepository);
+
+        var act = () => handler.Handle(Guid.NewGuid(), Guid.NewGuid());
+
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 
     [Fact]
-    public async Task Should_Throw_When_User_Does_Not_Own_Board()
+    public async Task Handle_ShouldThrow_WhenUserDoesNotOwnBoard()
     {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new DeleteBoardHandler(repo);
+        var board = new Board(Guid.NewGuid(), "Board"); // owner ≠ userId
 
-        var ownerId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
+        _boardRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+            .Returns(board);
 
-        var board = new Board(ownerId, "Board");
+        var handler = new DeleteBoardHandler(_boardRepository);
 
-        repo.GetByIdAsync(board.Id, ownerId).Returns(board);
+        var act = () => handler.Handle(Guid.NewGuid(), Guid.NewGuid());
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            handler.Handle(board.Id, otherUserId));
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 }

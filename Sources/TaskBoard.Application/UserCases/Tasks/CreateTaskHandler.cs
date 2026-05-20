@@ -1,13 +1,16 @@
 ﻿using TaskBoard.Application.Requests;
+using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Interfaces;
 
 public class CreateTaskHandler
 {
     private readonly IBoardRepository _boardRepository;
+    private readonly ITaskRepository _taskRepository;
 
-    public CreateTaskHandler(IBoardRepository boardRepository)
+    public CreateTaskHandler(IBoardRepository boardRepository, ITaskRepository taskRepository)
     {
         _boardRepository = boardRepository;
+        _taskRepository = taskRepository;
     }
 
     public async Task<Guid> Handle(Guid boardId, Guid userId, CreateTaskRequest request)
@@ -20,9 +23,18 @@ public class CreateTaskHandler
         if (column is null)
             throw new Exception("Column not found.");
 
-        var task = column.AddTask(request.Name, request.Description, request.Icon);
+        // On crée la Task
+        var task = new TaskItem(
+            column.Id,
+            request.Name,
+            request.Description,
+            request.Icon,
+            order: column.Tasks.Count
+        );
 
-        await _boardRepository.UpdateAsync(board);
+        // On l'ajoute directement dans la DB
+        await _taskRepository.AddAsync(task);
+
         return task.Id;
     }
 }

@@ -1,31 +1,26 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using NSubstitute;
+using TaskBoard.Application.Services;
 using TaskBoard.Infrastructure.Security;
+using Xunit;
 
 namespace TaskBoard.Infrastructure.Tests.Security;
-
 public class JwtTokenServiceTests
 {
     [Fact]
-    public void Should_Generate_Valid_JWT()
+    public void GenerateToken_ShouldReturnNonEmptyToken()
     {
-        var settings = new Dictionary<string, string?>
-        {
-            // Clé HMAC HS256 : au moins 32 caractères
-            { "Jwt:Key", "THIS_IS_A_32_BYTE_MINIMUM_SECRET_KEY" },
-            { "Jwt:Issuer", "TestIssuer" },
-            { "Jwt:Audience", "TestAudience" },
-            { "Jwt:ExpiresMinutes", "60" }
-        };
-
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(settings)
-            .Build();
-
+        // Arrange
+        var config = Substitute.For<IConfiguration>();
+        config["Jwt:Key"].Returns("THIS_IS_A_32_BYTE_MINIMUM_SECRET_KEY_1234");
         var service = new JwtTokenService(config);
 
-        var token = service.GenerateToken(Guid.NewGuid(), "test@mail.com");
+        // Act
+        var token = service.GenerateToken(Guid.NewGuid(), "user@example.com");
 
-        Assert.False(string.IsNullOrWhiteSpace(token));
-        Assert.Contains(".", token);
+        // Assert
+        token.Should().NotBeNullOrWhiteSpace();
+        token.Should().Contain(".");
     }
 }

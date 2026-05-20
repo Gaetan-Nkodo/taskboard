@@ -1,46 +1,66 @@
-﻿using NSubstitute;
+﻿using FluentAssertions;
+using NSubstitute;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
+using Xunit;
 
 namespace TaskBoard.Application.Tests.Boards;
 
 public class UpdateBoardHandlerTests
 {
+    private readonly IBoardRepository _boardRepository = Substitute.For<IBoardRepository>();
+
     [Fact]
-    public async Task Should_Update_Board_When_User_Owns_It()
+    public async Task Handle_ShouldUpdateBoard_WhenUserOwnsBoard()
     {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new UpdateBoardHandler(repo);
-
+        // Arrange
         var userId = Guid.NewGuid();
-        var board = new Board(userId, "Old Name", "Old Desc");
+        var board = new Board(userId, "Old", "OldDesc");
 
-        repo.GetByIdAsync(board.Id, userId).Returns(board);
+        _boardRepository.GetByIdAsync(board.Id, userId).Returns(board);
 
-        var request = new UpdateBoardRequest("New Name", "New Desc");
+        var request = new UpdateBoardRequest("New", "NewDesc");
 
+        var handler = new UpdateBoardHandler(_boardRepository);
+
+        // Act
         await handler.Handle(board.Id, userId, request);
 
-        await repo.Received(1).UpdateAsync(board);
-        Assert.Equal("New Name", board.Name);
-        Assert.Equal("New Desc", board.Description);
+        // Assert
+        board.Name.Should().Be("New");
+        board.Description.Should().Be("NewDesc");
+
+        await _boardRepository.Received(1).UpdateAsync(board);
     }
 
     [Fact]
-    public async Task Should_Throw_When_Board_Not_Found()
+    public async Task Handle_ShouldThrow_WhenBoardNotFound()
     {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new UpdateBoardHandler(repo);
-
-        repo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+        _boardRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
             .Returns((Board?)null);
 
-        var request = new UpdateBoardRequest("Name", "Desc");
+        var handler = new UpdateBoardHandler(_boardRepository);
 
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(Guid.NewGuid(), Guid.NewGuid(), request));
+        var act = () => handler.Handle(Guid.NewGuid(), Guid.NewGuid(), new UpdateBoardRequest("A", null));
+
+        await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenUserDoesNotOwnBoard()
+    {
+        var board = new Board(Guid.NewGuid(), "Board");
+
+        _boardRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+            .Returns(board);
+
+        var handler = new UpdateBoardHandler(_boardRepository);
+
+        var act = () => handler.Handle(Guid.NewGuid(), Guid.NewGuid(), new UpdateBoardRequest("A", null));
+
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 }

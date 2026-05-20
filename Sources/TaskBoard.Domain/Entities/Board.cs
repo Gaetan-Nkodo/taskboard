@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace TaskBoard.Domain.Entities;
+﻿namespace TaskBoard.Domain.Entities;
 
 public class Board
 {
@@ -35,5 +33,4 @@ public class Board
         Name = name;
         Description = description;
     }
-
 }

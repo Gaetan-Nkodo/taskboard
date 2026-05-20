@@ -1,40 +1,54 @@
-﻿using NSubstitute;
+﻿using FluentAssertions;
+using NSubstitute;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
+using Xunit;
 
 namespace TaskBoard.Application.Tests.Boards;
 
 public class GetBoardHandlerTests
 {
+    private readonly IBoardRepository _boardRepository = Substitute.For<IBoardRepository>();
+
     [Fact]
-    public async Task Should_Return_Board_When_User_Owns_It()
+    public async Task Handle_ShouldReturnBoardDto_WhenBoardExists()
     {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new GetBoardHandler(repo);
-
+        // Arrange
         var userId = Guid.NewGuid();
-        var board = new Board(userId, "Board");
+        var boardId = Guid.NewGuid();
 
-        repo.GetByIdAsync(board.Id, userId).Returns(board);
+        var board = new Board(userId, "Board", "Desc");
+        var col = board.AddColumn("Todo", 1);
+        col.AddTask("Task 1");
 
-        var result = await handler.Handle(board.Id, userId);
+        _boardRepository.GetByIdAsync(boardId, userId).Returns(board);
 
-        Assert.Equal(board.Id, result.Id);
-        Assert.Equal("Board", result.Name);
+        var handler = new GetBoardHandler(_boardRepository);
+
+        // Act
+        var dto = await handler.Handle(boardId, userId);
+
+        // Assert
+        dto.Id.Should().Be(board.Id);
+        dto.Name.Should().Be("Board");
+        dto.Columns.Should().HaveCount(1);
+        dto.Columns.First().Tasks.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task Should_Throw_When_Board_Not_Found()
+    public async Task Handle_ShouldThrow_WhenBoardNotFound()
     {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new GetBoardHandler(repo);
-
-        repo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+        // Arrange
+        _boardRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
             .Returns((Board?)null);
 
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(Guid.NewGuid(), Guid.NewGuid()));
+        var handler = new GetBoardHandler(_boardRepository);
+
+        // Act
+        var act = () => handler.Handle(Guid.NewGuid(), Guid.NewGuid());
+
+        // Assert
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 }

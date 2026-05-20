@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net9.0": {
+    "net8.0": {
       "Castle.Core/5.1.1": {
         "type": "package",
         "dependencies": {
@@ -332,18 +332,6 @@
           "build/netcoreapp3.1/Microsoft.TestPlatform.TestHost.props": {}
         }
       },
-      "Moq/4.20.72": {
-        "type": "package",
-        "dependencies": {
-          "Castle.Core": "5.1.1"
-        },
-        "compile": {
-          "lib/net6.0/Moq.dll": {}
-        },
-        "runtime": {
-          "lib/net6.0/Moq.dll": {}
-        }
-      },
       "Newtonsoft.Json/13.0.1": {
         "type": "package",
         "compile": {
@@ -376,12 +364,12 @@
       "Serilog/4.3.1": {
         "type": "package",
         "compile": {
-          "lib/net9.0/Serilog.dll": {
+          "lib/net8.0/Serilog.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net9.0/Serilog.dll": {
+          "lib/net8.0/Serilog.dll": {
             "related": ".xml"
           }
         },
@@ -526,7 +514,7 @@
       },
       "TaskBoard.Application/1.0.0": {
         "type": "project",
-        "framework": ".NETCoreApp,Version=v9.0",
+        "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
           "FluentValidation": "12.1.1",
           "Serilog": "4.3.1",
@@ -541,12 +529,30 @@
       },
       "TaskBoard.Domain/1.0.0": {
         "type": "project",
-        "framework": ".NETCoreApp,Version=v9.0",
+        "framework": ".NETCoreApp,Version=v8.0",
         "compile": {
           "bin/placeholder/TaskBoard.Domain.dll": {}
         },
         "runtime": {
           "bin/placeholder/TaskBoard.Domain.dll": {}
+        }
+      },
+      "TaskBoard.Domain.Tests/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "FluentAssertions": "8.10.0",
+          "Microsoft.NET.Test.Sdk": "17.12.0",
+          "TaskBoard.Domain": "1.0.0",
+          "coverlet.collector": "6.0.2",
+          "xunit": "2.9.2",
+          "xunit.runner.visualstudio": "2.8.2"
+        },
+        "compile": {
+          "bin/placeholder/TaskBoard.Domain.Tests.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/TaskBoard.Domain.Tests.dll": {}
         }
       }
     }
@@ -942,23 +948,6 @@
         "microsoft.testplatform.testhost.nuspec"
       ]
     },
-    "Moq/4.20.72": {
-      "sha512": "EA55cjyNn8eTNWrgrdZJH5QLFp2L43oxl1tlkoYUKIE9pRwL784OWiTXeCV5ApS+AMYEAlt7Fo03A2XfouvHmQ==",
-      "type": "package",
-      "path": "moq/4.20.72",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "icon.png",
-        "lib/net462/Moq.dll",
-        "lib/net6.0/Moq.dll",
-        "lib/netstandard2.0/Moq.dll",
-        "lib/netstandard2.1/Moq.dll",
-        "moq.4.20.72.nupkg.sha512",
-        "moq.nuspec",
-        "readme.md"
-      ]
-    },
     "Newtonsoft.Json/13.0.1": {
       "sha512": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
       "type": "package",
@@ -1238,16 +1227,20 @@
       "type": "project",
       "path": "../../Sources/TaskBoard.Domain/TaskBoard.Domain.csproj",
       "msbuildProject": "../../Sources/TaskBoard.Domain/TaskBoard.Domain.csproj"
+    },
+    "TaskBoard.Domain.Tests/1.0.0": {
+      "type": "project",
+      "path": "../TaskBoard.Domain.Tests/TaskBoard.Domain.Tests.csproj",
+      "msbuildProject": "../TaskBoard.Domain.Tests/TaskBoard.Domain.Tests.csproj"
     }
   },
   "projectFileDependencyGroups": {
-    "net9.0": [
+    "net8.0": [
       "FluentAssertions >= 8.10.0",
       "Microsoft.NET.Test.Sdk >= 17.12.0",
-      "Moq >= 4.20.72",
       "NSubstitute >= 5.3.0",
       "TaskBoard.Application >= 1.0.0",
-      "TaskBoard.Domain >= 1.0.0",
+      "TaskBoard.Domain.Tests >= 1.0.0",
       "coverlet.collector >= 6.0.2",
       "xunit >= 2.9.2",
       "xunit.runner.visualstudio >= 2.8.2"
@@ -1275,21 +1268,21 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net9.0"
+        "net8.0"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net9.0": {
-          "targetAlias": "net9.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "projectReferences": {
             "D:\\APIRESTFULL\\TaskBoard\\Sources\\TaskBoard.Application\\TaskBoard.Application.csproj": {
               "projectPath": "D:\\APIRESTFULL\\TaskBoard\\Sources\\TaskBoard.Application\\TaskBoard.Application.csproj"
             },
-            "D:\\APIRESTFULL\\TaskBoard\\Sources\\TaskBoard.Domain\\TaskBoard.Domain.csproj": {
-              "projectPath": "D:\\APIRESTFULL\\TaskBoard\\Sources\\TaskBoard.Domain\\TaskBoard.Domain.csproj"
+            "D:\\APIRESTFULL\\TaskBoard\\Tests\\TaskBoard.Domain.Tests\\TaskBoard.Domain.Tests.csproj": {
+              "projectPath": "D:\\APIRESTFULL\\TaskBoard\\Tests\\TaskBoard.Domain.Tests\\TaskBoard.Domain.Tests.csproj"
             }
           }
         }
@@ -1307,8 +1300,8 @@
       "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
-      "net9.0": {
-        "targetAlias": "net9.0",
+      "net8.0": {
+        "targetAlias": "net8.0",
         "dependencies": {
           "FluentAssertions": {
             "target": "Package",
@@ -1317,10 +1310,6 @@
           "Microsoft.NET.Test.Sdk": {
             "target": "Package",
             "version": "[17.12.0, )"
-          },
-          "Moq": {
-            "target": "Package",
-            "version": "[4.20.72, )"
           },
           "NSubstitute": {
             "target": "Package",
@@ -1355,7 +1344,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.314/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

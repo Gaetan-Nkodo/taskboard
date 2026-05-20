@@ -1,26 +1,69 @@
-﻿using TaskBoard.Application.UseCases.Tasks;
+﻿using FluentAssertions;
+using NSubstitute;
+using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Interfaces;
-using Moq;
-using FluentAssertions;
+using Xunit;
+
+namespace TaskBoard.Application.Tests.Tasks;
 
 public class DeleteTaskHandlerTests
 {
+    private readonly IBoardRepository _boardRepository = Substitute.For<IBoardRepository>();
+
     [Fact]
-    public async Task Handle_ShouldRemoveTaskFromColumn()
+    public async Task Handle_ShouldDeleteTask_WhenTaskExists()
     {
-        var board = new Board(Guid.NewGuid(), "Board", null);
-        var column = board.AddColumn("In Progress", 1);
-        var task = column.AddTask("Task");
+        // Arrange
+        var userId = Guid.NewGuid();
+        var board = new Board(userId, "Board");
+        var column = board.AddColumn("Todo", 1);
+        var task = column.AddTask("Task", null, null);
 
-        var repo = new Mock<IBoardRepository>();
-        repo.Setup(r => r.GetByTaskIdAsync(task.Id, board.UserId))
-            .ReturnsAsync(board);
+        _boardRepository.GetByTaskIdAsync(task.Id, userId).Returns(board);
 
-        var handler = new DeleteTaskHandler(repo.Object);
+        var handler = new DeleteTaskHandler(_boardRepository);
 
-        await handler.Handle(task.Id, board.UserId);
+        // Act
+        await handler.Handle(task.Id, userId);
 
+        // Assert
         column.Tasks.Should().BeEmpty();
+        await _boardRepository.Received(1).UpdateAsync(board);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenTaskNotFound()
+    {
+        // Arrange
+        _boardRepository.GetByTaskIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+            .Returns((Board?)null);
+
+        var handler = new DeleteTaskHandler(_boardRepository);
+
+        // Act
+        var act = () => handler.Handle(Guid.NewGuid(), Guid.NewGuid());
+
+        // Assert
+        await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenUserDoesNotOwnBoard()
+    {
+        // Arrange
+        var board = new Board(Guid.NewGuid(), "Board"); // owner ≠ userId
+        var userId = Guid.NewGuid();
+
+        _boardRepository.GetByTaskIdAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+            .Returns(board);
+
+        var handler = new DeleteTaskHandler(_boardRepository);
+
+        // Act
+        var act = () => handler.Handle(Guid.NewGuid(), userId);
+
+        // Assert
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 }

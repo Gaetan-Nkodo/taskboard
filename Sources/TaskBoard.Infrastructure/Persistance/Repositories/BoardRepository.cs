@@ -22,7 +22,6 @@ public class BoardRepository : IBoardRepository
             .Where(b => b.UserId == userId)
             .Include(b => b.Columns)
                 .ThenInclude(c => c.Tasks)
-            .AsNoTracking()
             .ToListAsync();
 
         Log.Debug("DB: BoardsFetched {@Result}", new { Count = boards.Count, userId });

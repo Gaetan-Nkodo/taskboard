@@ -88,7 +88,11 @@ public class BoardsController : ControllerBase
 
     private Guid GetUserId()
     {
-        var claim = User.Claims.FirstOrDefault(c => c.Type == "sub");
-        return claim is null ? Guid.Empty : Guid.Parse(claim.Value);
+        var sub = User.FindFirst("sub")?.Value;
+
+        if (string.IsNullOrWhiteSpace(sub))
+            throw new UnauthorizedAccessException("Missing 'sub' claim in JWT.");
+
+        return Guid.Parse(sub);
     }
 }

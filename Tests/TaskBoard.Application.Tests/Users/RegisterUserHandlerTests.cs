@@ -1,25 +1,60 @@
-﻿using NSubstitute;
+﻿using FluentAssertions;
+using NSubstitute;
+using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
-using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Users;
 using TaskBoard.Domain.Entities;
+using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
+using TaskBoard.Application.Services;
+using Xunit;
+
+namespace TaskBoard.Application.Tests.Users;
 
 public class RegisterUserHandlerTests
 {
+    private readonly IUserRepository _users = Substitute.For<IUserRepository>();
+    private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
+
     [Fact]
-    public async Task Should_Register_User_When_Email_Not_Used()
+    public async Task Handle_ShouldRegisterUser_WhenEmailNotUsed()
     {
-        var repo = Substitute.For<IUserRepository>();
-        var hasher = Substitute.For<IPasswordHasher>();
+        // Arrange
+        var request = new RegisterUserRequest("user@example.com", "P@ssw0rd!");
 
-        hasher.Hash("password").Returns("hashed");
+        _users.GetByEmailAsync(request.Email).Returns((User?)null);
+        _hasher.Hash(request.Password).Returns("hashed");
 
-        var handler = new RegisterUserHandler(repo, hasher);
+        var handler = new RegisterUserHandler(_users, _hasher);
 
-        var result = await handler.Handle(new RegisterUserRequest("test@mail.com", "password"));
+        // Act
+        var result = await handler.Handle(request);
 
-        Assert.Equal("test@mail.com", result.Email);
-        await repo.Received(1).AddAsync(Arg.Any<User>());
+        // Assert
+        result.Should().BeOfType<UserDto>();
+        result.Email.Should().Be("user@example.com");
+
+        await _users.Received(1).AddAsync(Arg.Is<User>(u =>
+            u.Email == "user@example.com" &&
+            u.PasswordHash == "hashed"
+        ));
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenEmailAlreadyUsed()
+    {
+        // Arrange
+        var request = new RegisterUserRequest("user@example.com", "P@ssw0rd!");
+
+        _users.GetByEmailAsync(request.Email).Returns(new User("user@example.com", "hash"));
+
+        var handler = new RegisterUserHandler(_users, _hasher);
+
+        // Act
+        var act = () => handler.Handle(request);
+
+        // Assert
+        await act.Should().ThrowAsync<DomainException>()
+            .WithMessage("Email already in use.");
     }
 }

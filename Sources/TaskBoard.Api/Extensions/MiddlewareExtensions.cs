@@ -1,8 +1,6 @@
 ﻿using TaskBoard.Api.Middleware;
 using TaskBoard.Api.Middlewares;
 
-namespace TaskBoard.Api.Extensions;
-
 public static class MiddlewareExtensions
 {
     public static IApplicationBuilder UseCustomMiddlewares(this IApplicationBuilder app)
@@ -13,7 +11,13 @@ public static class MiddlewareExtensions
         app.UseMiddleware<RequestLoggingMiddleware>();
 
         app.UseRouting();
-        app.UseHttpsRedirection();
+
+        // Désactiver HTTPS en environnement de test
+        var env = app.ApplicationServices.GetRequiredService<IHostEnvironment>();
+        if (!env.IsEnvironment("Testing"))
+        {
+            app.UseHttpsRedirection();
+        }
 
         return app;
     }

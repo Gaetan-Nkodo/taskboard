@@ -3,21 +3,16 @@ using TaskBoard.Domain.Entities;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options): base(options)
-    {
-    }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Board> Boards => Set<Board>();
     public DbSet<Column> Columns => Set<Column>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<User> Users => Set<User>();
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         modelBuilder.Entity<Board>(builder =>
         {
@@ -28,9 +23,12 @@ public class AppDbContext : DbContext
                 .HasMaxLength(200);
 
             builder.HasMany(b => b.Columns)
-                .WithOne()
+                .WithOne(c => c.Board)
                 .HasForeignKey(c => c.BoardId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Navigation(b => b.Columns)
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         modelBuilder.Entity<Column>(builder =>
@@ -45,9 +43,12 @@ public class AppDbContext : DbContext
                 .IsRequired();
 
             builder.HasMany(c => c.Tasks)
-                .WithOne()
+                .WithOne(t => t.Column)
                 .HasForeignKey(t => t.ColumnId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Navigation(c => c.Tasks)
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         modelBuilder.Entity<TaskItem>(builder =>
@@ -57,8 +58,6 @@ public class AppDbContext : DbContext
             builder.Property(t => t.Name)
                 .IsRequired()
                 .HasMaxLength(200);
-
-            builder.HasIndex(t => t.ColumnId);
 
             builder.Property(t => t.Order)
                 .IsRequired();

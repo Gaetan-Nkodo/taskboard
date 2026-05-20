@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
         // Repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
+        services.AddScoped<ITaskRepository, TaskRepository>();
 
         // Security
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();

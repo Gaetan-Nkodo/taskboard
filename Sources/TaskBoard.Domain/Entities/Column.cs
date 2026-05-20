@@ -6,6 +6,8 @@ public class Column
 
     public Guid Id { get; private set; }
     public Guid BoardId { get; private set; }
+    public Board Board { get; private set; } = default!;
+
     public string Name { get; private set; } = default!;
     public int Order { get; private set; }
 
@@ -35,5 +37,4 @@ public class Column
         if (task is not null)
             _tasks.Remove(task);
     }
-
 }

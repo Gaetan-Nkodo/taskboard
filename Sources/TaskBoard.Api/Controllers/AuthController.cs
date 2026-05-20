@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Users;
 
@@ -23,14 +24,14 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
     {
         var user = await _registerHandler.Handle(request);
-        return Ok(user);
+        return Ok(new UserDto(Id: user.Id, Email: user.Email));
     }
 
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginUserRequest request)
     {
-        var token = await _loginHandler.Handle(request);
-        return Ok(new { token });
+        var result = await _loginHandler.Handle(request);
+        return Ok(new LoginResponseDto(Token: result.Token, User: result.User));
     }
 }

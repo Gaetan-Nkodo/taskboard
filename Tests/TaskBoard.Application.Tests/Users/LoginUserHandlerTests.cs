@@ -1,11 +1,13 @@
-﻿using NSubstitute;
+﻿using FluentAssertions;
+using NSubstitute;
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
-using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Users;
+using TaskBoard.Application.Services;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
+using Xunit;
 
 namespace TaskBoard.Application.Tests.Users;
 
@@ -16,54 +18,64 @@ public class LoginUserHandlerTests
     private readonly ITokenService _tokens = Substitute.For<ITokenService>();
 
     [Fact]
-    public async Task Should_Login_When_Credentials_Are_Valid()
+    public async Task Handle_ShouldReturnToken_WhenCredentialsAreValid()
     {
         // Arrange
-        var user = new User("test@mail.com", "hashed-password");
+        var request = new LoginUserRequest("user@example.com", "P@ssw0rd!");
 
-        _users.GetByEmailAsync("test@mail.com").Returns(user);
-        _hasher.Verify("password", "hashed-password").Returns(true);
+        var user = new User("user@example.com", "hashed");
+
+        _users.GetByEmailAsync(request.Email).Returns(user);
+        _hasher.Verify(request.Password, user.PasswordHash).Returns(true);
         _tokens.GenerateToken(user.Id, user.Email).Returns("jwt-token");
 
         var handler = new LoginUserHandler(_users, _hasher, _tokens);
-
-        var request = new LoginUserRequest("test@mail.com", "password");
 
         // Act
         var result = await handler.Handle(request);
 
         // Assert
-        Assert.Equal(user.Id, result.User.Id);
-        Assert.Equal("test@mail.com", result.User.Email);
-        Assert.Equal("jwt-token", result.Token);
+        result.Should().BeOfType<LoginResultDto>();
+        result.Token.Should().Be("jwt-token");
+        result.User.Email.Should().Be("user@example.com");
     }
 
     [Fact]
-    public async Task Should_Throw_When_User_Does_Not_Exist()
+    public async Task Handle_ShouldThrow_WhenUserNotFound()
     {
         // Arrange
-        _users.GetByEmailAsync("unknown@mail.com").Returns((User?)null);
+        var request = new LoginUserRequest("user@example.com", "P@ssw0rd!");
+
+        _users.GetByEmailAsync(request.Email).Returns((User?)null);
 
         var handler = new LoginUserHandler(_users, _hasher, _tokens);
-        var request = new LoginUserRequest("unknown@mail.com", "password");
 
-        // Act + Assert
-        await Assert.ThrowsAsync<DomainException>(() => handler.Handle(request));
+        // Act
+        var act = () => handler.Handle(request);
+
+        // Assert
+        await act.Should().ThrowAsync<DomainException>()
+            .WithMessage("User Not Found.");
     }
 
     [Fact]
-    public async Task Should_Throw_When_Password_Is_Invalid()
+    public async Task Handle_ShouldThrow_WhenPasswordInvalid()
     {
         // Arrange
-        var user = new User("test@mail.com", "hashed-password");
+        var request = new LoginUserRequest("user@example.com", "wrong");
 
-        _users.GetByEmailAsync("test@mail.com").Returns(user);
-        _hasher.Verify("wrong-password", "hashed-password").Returns(false);
+        var user = new User("user@example.com", "hashed");
+
+        _users.GetByEmailAsync(request.Email).Returns(user);
+        _hasher.Verify(request.Password, user.PasswordHash).Returns(false);
 
         var handler = new LoginUserHandler(_users, _hasher, _tokens);
-        var request = new LoginUserRequest("test@mail.com", "wrong-password");
 
-        // Act + Assert
-        await Assert.ThrowsAsync<DomainException>(() => handler.Handle(request));
+        // Act
+        var act = () => handler.Handle(request);
+
+        // Assert
+        await act.Should().ThrowAsync<DomainException>()
+            .WithMessage("Invalid credentials.");
     }
 }

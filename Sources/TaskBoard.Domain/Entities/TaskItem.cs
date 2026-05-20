@@ -4,6 +4,8 @@ public class TaskItem
 {
     public Guid Id { get; private set; }
     public Guid ColumnId { get; private set; }
+    public Column Column { get; private set; } = default!;
+
     public string Name { get; private set; } = default!;
     public string? Description { get; private set; }
     public string? Icon { get; private set; }

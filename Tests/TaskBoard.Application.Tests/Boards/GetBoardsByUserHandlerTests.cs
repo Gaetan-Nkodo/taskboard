@@ -1,45 +1,38 @@
-﻿using NSubstitute;
+﻿using FluentAssertions;
+using NSubstitute;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Interfaces;
+using Xunit;
 
 namespace TaskBoard.Application.Tests.Boards;
 
 public class GetBoardsByUserHandlerTests
 {
-    [Fact]
-    public async Task Should_Return_All_Boards_For_User()
-    {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new GetBoardsByUserHandler(repo);
+    private readonly IBoardRepository _boardRepository = Substitute.For<IBoardRepository>();
 
+    [Fact]
+    public async Task Handle_ShouldReturnBoardsForUser()
+    {
+        // Arrange
         var userId = Guid.NewGuid();
 
         var boards = new List<Board>
         {
-            new Board(userId, "Board 1"),
-            new Board(userId, "Board 2")
+            new Board(userId, "Board 1", "Desc 1"),
+            new Board(userId, "Board 2", "Desc 2")
         };
 
-        repo.GetByUserIdAsync(userId).Returns(boards);
+        _boardRepository.GetByUserIdAsync(userId).Returns(boards);
 
+        var handler = new GetBoardsByUserHandler(_boardRepository);
+
+        // Act
         var result = await handler.Handle(userId);
 
-        Assert.Equal(2, result.Count);
-    }
-
-    [Fact]
-    public async Task Should_Return_Empty_List_When_User_Has_No_Boards()
-    {
-        var repo = Substitute.For<IBoardRepository>();
-        var handler = new GetBoardsByUserHandler(repo);
-
-        var userId = Guid.NewGuid();
-
-        repo.GetByUserIdAsync(userId).Returns(new List<Board>());
-
-        var result = await handler.Handle(userId);
-
-        Assert.Empty(result);
+        // Assert
+        result.Should().HaveCount(2);
+        result.Should().ContainEquivalentOf(new { Name = "Board 1" });
+        result.Should().ContainEquivalentOf(new { Name = "Board 2" });
     }
 }

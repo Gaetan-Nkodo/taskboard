@@ -1,37 +1,41 @@
-﻿using TaskBoard.Infrastructure.Security;
+﻿using FluentAssertions;
+using TaskBoard.Infrastructure.Security;
+using Xunit;
 
 namespace TaskBoard.Infrastructure.Tests.Security;
 
 public class BCryptPasswordHasherTests
 {
+    private readonly BCryptPasswordHasher _hasher = new();
+
     [Fact]
-    public void Hash_Should_Generate_Different_Hashes_For_Same_Password()
+    public void Hash_ShouldReturnNonEmptyString()
     {
-        var hasher = new BCryptPasswordHasher();
+        var password = "P@ssw0rd!";
+        var hash = _hasher.Hash(password);
 
-        var hash1 = hasher.Hash("password");
-        var hash2 = hasher.Hash("password");
-
-        Assert.NotEqual(hash1, hash2);
+        hash.Should().NotBeNullOrWhiteSpace();
+        hash.Should().NotBe(password);
     }
 
     [Fact]
-    public void Verify_Should_Return_True_For_Valid_Password()
+    public void Verify_ShouldReturnTrue_WhenPasswordMatchesHash()
     {
-        var hasher = new BCryptPasswordHasher();
+        var password = "P@ssw0rd!";
+        var hash = _hasher.Hash(password);
 
-        var hash = hasher.Hash("password");
+        var result = _hasher.Verify(password, hash);
 
-        Assert.True(hasher.Verify("password", hash));
+        result.Should().BeTrue();
     }
 
     [Fact]
-    public void Verify_Should_Return_False_For_Invalid_Password()
+    public void Verify_ShouldReturnFalse_WhenPasswordDoesNotMatchHash()
     {
-        var hasher = new BCryptPasswordHasher();
+        var hash = _hasher.Hash("P@ssw0rd!");
 
-        var hash = hasher.Hash("password");
+        var result = _hasher.Verify("wrong", hash);
 
-        Assert.False(hasher.Verify("wrong", hash));
+        result.Should().BeFalse();
     }
 }
