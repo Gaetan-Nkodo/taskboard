@@ -1,4 +1,4 @@
-﻿using TaskBoard.Api.Middleware;
+using TaskBoard.Api.Middleware;
 using TaskBoard.Api.Middlewares;
 
 public static class MiddlewareExtensions

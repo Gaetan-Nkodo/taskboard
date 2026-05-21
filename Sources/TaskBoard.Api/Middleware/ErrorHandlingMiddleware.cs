@@ -1,6 +1,9 @@
-﻿using Microsoft.Azure.ServiceBus;
-using Serilog;
 using System.Net;
+
+using Microsoft.Azure.ServiceBus;
+
+using Serilog;
+
 using TaskBoard.Domain.Exceptions;
 
 public class ErrorHandlingMiddleware

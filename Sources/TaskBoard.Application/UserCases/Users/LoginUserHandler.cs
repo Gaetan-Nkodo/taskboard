@@ -1,4 +1,4 @@
-﻿using TaskBoard.Application.DTOs;
+using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.Services;
 using TaskBoard.Domain.Exceptions;

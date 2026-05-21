@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TaskBoard.Domain.Entities;
 
 namespace TaskBoard.Infrastructure.Persistence.Configurations;

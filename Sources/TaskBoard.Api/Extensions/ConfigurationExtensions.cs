@@ -1,4 +1,4 @@
-﻿namespace TaskBoard.Api.Extensions;
+namespace TaskBoard.Api.Extensions;
 
 public static class ConfigurationExtensions
 {

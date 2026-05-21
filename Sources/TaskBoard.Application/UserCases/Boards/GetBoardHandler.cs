@@ -1,4 +1,4 @@
-﻿using TaskBoard.Application.DTOs;
+using TaskBoard.Application.DTOs;
 
 namespace TaskBoard.Application.UseCases.Boards;
 

@@ -1,4 +1,4 @@
-﻿namespace TaskBoard.Application.Requests;
+namespace TaskBoard.Application.Requests;
 
 public record UpdateTaskRequest(
     Guid ColumnId,

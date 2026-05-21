@@ -1,4 +1,4 @@
-﻿namespace TaskBoard.Application.UseCases.Boards;
+namespace TaskBoard.Application.UseCases.Boards;
 
 public class GetBoardsByUserHandler
 {

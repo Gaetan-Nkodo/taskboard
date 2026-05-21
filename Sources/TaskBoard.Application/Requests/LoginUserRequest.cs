@@ -1,3 +1,3 @@
-﻿namespace TaskBoard.Application.Requests;
+namespace TaskBoard.Application.Requests;
 
 public record LoginUserRequest(string Email, string Password);

@@ -1,4 +1,4 @@
-﻿namespace TaskBoard.Domain.Exceptions;
+namespace TaskBoard.Domain.Exceptions;
 
 public class DomainException : Exception
 {

@@ -1,4 +1,4 @@
-﻿using Serilog;
+using Serilog;
 
 namespace TaskBoard.Application.UseCases.Boards;
 

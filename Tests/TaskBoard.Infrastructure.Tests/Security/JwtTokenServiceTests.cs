@@ -1,6 +1,9 @@
-﻿using FluentAssertions;
+using FluentAssertions;
+
 using Microsoft.Extensions.Configuration;
+
 using NSubstitute;
+
 using TaskBoard.Infrastructure.Security;
 
 namespace TaskBoard.Infrastructure.Tests.Security;

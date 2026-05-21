@@ -1,4 +1,4 @@
-﻿using TaskBoard.Domain.Exceptions;
+using TaskBoard.Domain.Exceptions;
 
 public class NotFoundException : DomainException
 {

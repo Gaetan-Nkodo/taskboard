@@ -1,4 +1,4 @@
-﻿using TaskBoard.Domain.Entities;
+using TaskBoard.Domain.Entities;
 
 namespace TaskBoard.Domain.Interfaces;
 

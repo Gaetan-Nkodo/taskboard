@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TaskBoard.Domain.Entities;
 
 public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>

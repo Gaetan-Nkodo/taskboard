@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+using FluentAssertions;
+
 using TaskBoard.Infrastructure.Security;
 
 namespace TaskBoard.Infrastructure.Tests.Security;

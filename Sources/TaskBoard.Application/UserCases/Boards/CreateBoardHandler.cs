@@ -1,4 +1,4 @@
-﻿using TaskBoard.Application.Requests;
+using TaskBoard.Application.Requests;
 using TaskBoard.Domain.Entities;
 
 namespace TaskBoard.Application.UseCases.Boards;

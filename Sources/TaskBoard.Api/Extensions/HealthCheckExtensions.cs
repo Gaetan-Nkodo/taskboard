@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+
 using TaskBoard.Api.Health;
 
 namespace TaskBoard.Api.Extensions;

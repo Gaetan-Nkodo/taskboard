@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+using FluentAssertions;
+
 using TaskBoard.Domain.Entities;
 
 namespace TaskBoard.Domain.Tests.Entities;

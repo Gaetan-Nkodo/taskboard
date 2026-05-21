@@ -1,7 +1,9 @@
-﻿using FluentAssertions;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+
+using FluentAssertions;
+
 using TaskBoard.Api.Tests.Fixtures;
 using TaskBoard.Application.Requests;
 

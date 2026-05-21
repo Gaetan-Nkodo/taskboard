@@ -1,4 +1,4 @@
-﻿public sealed record BoardResponseDto(
+public sealed record BoardResponseDto(
     Guid Id,
     string Name,
     string? Description,

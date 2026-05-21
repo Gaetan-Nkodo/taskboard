@@ -1,4 +1,4 @@
-﻿namespace TaskBoard.Application.Services;
+namespace TaskBoard.Application.Services;
 
 public interface IPasswordHasher
 {

@@ -1,4 +1,4 @@
-﻿namespace TaskBoard.Domain.Entities;
+namespace TaskBoard.Domain.Entities;
 
 public class TaskItem
 {
