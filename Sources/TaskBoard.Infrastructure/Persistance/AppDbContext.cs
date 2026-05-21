@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
 using TaskBoard.Domain.Entities;
 
 public class AppDbContext : DbContext

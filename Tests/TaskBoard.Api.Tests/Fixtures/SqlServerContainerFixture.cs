@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
 using Testcontainers.MsSql;
 
 namespace TaskBoard.Api.Tests.Fixtures;

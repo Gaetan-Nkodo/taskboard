@@ -1,0 +1,102 @@
+# Top-most EditorConfig file
+root = true
+
+###############################################################
+# GLOBAL SETTINGS
+###############################################################
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+###############################################################
+# C# FILES
+###############################################################
+
+[*.cs]
+
+# -----------------------------
+# Formatting
+# -----------------------------
+csharp_new_line_before_open_brace = all
+csharp_new_line_between_members = true
+csharp_indent_block_contents = true
+csharp_indent_braces = false
+csharp_indent_switch_labels = true
+csharp_indent_case_contents = true
+csharp_indent_case_contents_when_block = true
+
+# Remove extra blank lines
+dotnet_style_allow_multiple_blank_lines_experimental = false
+
+# Require a blank line between members
+csharp_new_line_between_members = true
+
+# -----------------------------
+# Spacing rules
+# -----------------------------
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_after_cast = false
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_around_binary_operators = before_and_after
+
+# -----------------------------
+# Using directives
+# -----------------------------
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# -----------------------------
+# var usage
+# -----------------------------
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# -----------------------------
+# Expression preferences
+# -----------------------------
+csharp_style_expression_bodied_methods = false
+csharp_style_expression_bodied_properties = true
+csharp_style_expression_bodied_accessors = true
+
+# -----------------------------
+# Naming conventions
+# -----------------------------
+dotnet_naming_rule.private_fields_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel_case.style = camel_case_style
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers = readonly
+
+dotnet_naming_style.camel_case_style.capitalization = camel_case
+
+###############################################################
+# JSON, YAML, XML
+###############################################################
+
+[*.json]
+indent_size = 2
+
+[*.yml]
+indent_size = 2
+
+[*.yaml]
+indent_size = 2
+
+[*.xml]
+indent_size = 2
+
+###############################################################
+# Markdown
+###############################################################
+
+[*.md]
+trim_trailing_whitespace = false

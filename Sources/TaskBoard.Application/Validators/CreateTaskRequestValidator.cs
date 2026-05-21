@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+using FluentValidation;
+
 using TaskBoard.Application.Requests;
 
 public class CreateTaskRequestValidator : AbstractValidator<CreateTaskRequest>

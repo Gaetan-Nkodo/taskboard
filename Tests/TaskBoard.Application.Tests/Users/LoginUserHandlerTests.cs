@@ -1,5 +1,7 @@
-﻿using FluentAssertions;
+using FluentAssertions;
+
 using NSubstitute;
+
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.Services;

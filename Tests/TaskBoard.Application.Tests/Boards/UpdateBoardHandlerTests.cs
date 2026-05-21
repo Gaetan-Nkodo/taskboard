@@ -1,5 +1,7 @@
-﻿using FluentAssertions;
+using FluentAssertions;
+
 using NSubstitute;
+
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Domain.Entities;
