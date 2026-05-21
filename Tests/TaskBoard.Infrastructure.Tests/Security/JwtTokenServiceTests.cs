@@ -7,6 +7,7 @@ using NSubstitute;
 using TaskBoard.Infrastructure.Security;
 
 namespace TaskBoard.Infrastructure.Tests.Security;
+
 public class JwtTokenServiceTests
 {
     [Fact]
