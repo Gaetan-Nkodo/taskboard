@@ -1,5 +1,4 @@
 ﻿using TaskBoard.Application.Requests;
-using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Tasks;
 

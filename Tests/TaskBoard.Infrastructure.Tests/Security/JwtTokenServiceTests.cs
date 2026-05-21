@@ -1,9 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
-using TaskBoard.Application.Services;
 using TaskBoard.Infrastructure.Security;
-using Xunit;
 
 namespace TaskBoard.Infrastructure.Tests.Security;
 public class JwtTokenServiceTests

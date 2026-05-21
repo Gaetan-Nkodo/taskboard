@@ -2,9 +2,6 @@
 using NSubstitute;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Exceptions;
-using TaskBoard.Domain.Interfaces;
-using Xunit;
 
 namespace TaskBoard.Application.Tests.Boards;
 

@@ -1,10 +1,8 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using TaskBoard.Application.Requests;
-using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Interfaces;
-using Xunit;
 
 namespace TaskBoard.Application.Tests.Tasks;
 

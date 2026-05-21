@@ -26,7 +26,7 @@ public class ErrorHandlingMiddleware
         }
         catch (UnauthorizedException ex)
         {
-            Log.Warning(ex, "UnauthorizedException"); 
+            Log.Warning(ex, "UnauthorizedException");
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             await context.Response.WriteAsJsonAsync(new { error = ex.Message });
         }

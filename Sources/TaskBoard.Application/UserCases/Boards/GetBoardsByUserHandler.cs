@@ -1,6 +1,4 @@
-﻿using TaskBoard.Domain.Interfaces;
-
-namespace TaskBoard.Application.UseCases.Boards;
+﻿namespace TaskBoard.Application.UseCases.Boards;
 
 public class GetBoardsByUserHandler
 {
@@ -16,7 +14,7 @@ public class GetBoardsByUserHandler
         var boards = await _boardRepository.GetByUserIdAsync(userId);
 
         return boards
-            .Select(b => new {b.Id, b.Name, b.Description})
+            .Select(b => new { b.Id, b.Name, b.Description })
             .ToList<object>();
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Testcontainers.MsSql;
-using TaskBoard.Infrastructure.Persistence;
 
 namespace TaskBoard.Api.Tests.Fixtures;
 

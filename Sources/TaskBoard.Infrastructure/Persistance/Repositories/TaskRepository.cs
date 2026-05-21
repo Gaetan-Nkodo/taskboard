@@ -1,7 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using TaskBoard.Domain.Entities;
+﻿using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Interfaces;
-using TaskBoard.Infrastructure.Persistence;
 
 namespace TaskBoard.Infrastructure.Persistence.Repositories;
 

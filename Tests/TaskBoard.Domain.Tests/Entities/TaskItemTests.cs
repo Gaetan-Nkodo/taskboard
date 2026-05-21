@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using TaskBoard.Domain.Entities;
-using Xunit;
 
 namespace TaskBoard.Domain.Tests.Entities;
 

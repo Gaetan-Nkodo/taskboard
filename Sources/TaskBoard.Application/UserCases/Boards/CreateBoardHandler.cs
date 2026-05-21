@@ -1,6 +1,5 @@
 ﻿using TaskBoard.Application.Requests;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Boards;
 

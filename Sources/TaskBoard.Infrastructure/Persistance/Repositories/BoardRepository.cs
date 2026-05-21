@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Infrastructure.Persistence.Repositories;
 

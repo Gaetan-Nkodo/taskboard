@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http.Json;
 using TaskBoard.Api.Tests.Fixtures;
 using TaskBoard.Application.Requests;
-using Xunit;
 
 namespace TaskBoard.Api.Tests.Integration;
 

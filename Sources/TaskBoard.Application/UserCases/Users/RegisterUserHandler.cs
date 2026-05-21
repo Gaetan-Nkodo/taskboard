@@ -2,8 +2,8 @@
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.Services;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Domain.Interfaces;
 using TaskBoard.Domain.Exceptions;
+using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Users;
 

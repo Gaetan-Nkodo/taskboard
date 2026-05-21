@@ -1,9 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using TaskBoard.Domain.Entities;
-using TaskBoard.Infrastructure.Persistence;
 using TaskBoard.Infrastructure.Persistence.Repositories;
-using Xunit;
 
 namespace TaskBoard.Infrastructure.Tests.Persistence;
 

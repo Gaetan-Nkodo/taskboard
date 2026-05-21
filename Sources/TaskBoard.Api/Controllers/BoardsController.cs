@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Boards;
-using TaskBoard.Application.UseCases.Tasks;
 
 namespace TaskBoard.Api.Controllers;
 

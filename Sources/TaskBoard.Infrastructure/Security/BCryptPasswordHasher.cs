@@ -1,5 +1,4 @@
-﻿using BCrypt.Net;
-using TaskBoard.Application.Services;
+﻿using TaskBoard.Application.Services;
 
 namespace TaskBoard.Infrastructure.Security;
 

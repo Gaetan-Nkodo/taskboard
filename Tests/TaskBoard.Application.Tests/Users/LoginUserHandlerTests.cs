@@ -2,12 +2,11 @@
 using NSubstitute;
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
-using TaskBoard.Application.UseCases.Users;
 using TaskBoard.Application.Services;
+using TaskBoard.Application.UseCases.Users;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
-using Xunit;
 
 namespace TaskBoard.Application.Tests.Users;
 

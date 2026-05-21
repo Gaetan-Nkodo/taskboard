@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using TaskBoard.Infrastructure.Security;
-using Xunit;
 
 namespace TaskBoard.Infrastructure.Tests.Security;
 

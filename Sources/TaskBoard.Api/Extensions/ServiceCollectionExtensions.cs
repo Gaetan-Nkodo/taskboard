@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using TaskBoard.Application.Requests;
 using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Application.UseCases.Tasks;

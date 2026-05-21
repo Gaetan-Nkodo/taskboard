@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TaskBoard.Infrastructure.Persistence;
 
 namespace TaskBoard.Api.Extensions;
 

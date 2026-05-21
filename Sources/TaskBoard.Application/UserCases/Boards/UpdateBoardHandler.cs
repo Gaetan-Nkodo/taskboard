@@ -1,7 +1,5 @@
 ﻿using Serilog;
 using TaskBoard.Application.Requests;
-using TaskBoard.Domain.Exceptions;
-using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Boards;
 
