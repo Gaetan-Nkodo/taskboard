@@ -181,8 +181,8 @@ jobs:
           file: Sources/TaskBoard.Api/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            ghcr.io/gaetan-nkodo/taskboard/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/gaetan-nkodo/taskboard/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -203,7 +203,7 @@ jobs:
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@v0.24.0
         with:
-          image-ref: ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ghcr.io/gaetan-nkodo/taskboard/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           severity: HIGH,CRITICAL
           exit-code: 1
 
@@ -243,10 +243,10 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           script: |
-            docker pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            docker pull ghcr.io/gaetan-nkodo/taskboard/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
             docker stop taskboard-api || true
             docker rm taskboard-api || true
-            docker run -d --name taskboard-api -p 80:80 ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            docker run -d --name taskboard-api -p 80:80 ghcr.io/gaetan-nkodo/taskboard/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
 
 
   # -----------------------------
@@ -265,7 +265,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            docker pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            docker pull ghcr.io/gaetan-nkodo/taskboard/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
             docker stop taskboard-api || true
             docker rm taskboard-api || true
-            docker run -d --name taskboard-api -p 80:80 ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            docker run -d --name taskboard-api -p 80:80 ghcr.io/gaetan-nkodo/taskboard/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
