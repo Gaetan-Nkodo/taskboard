@@ -1,14 +1,14 @@
 # -----------------------------
-# 1) BASE RUNTIME (léger)
+# 1) BASE RUNTIME (Alpine)
 # -----------------------------
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS base
 WORKDIR /app
 EXPOSE 8080
 
 # -----------------------------
-# 2) BUILD STAGE (SDK)
+# 2) BUILD STAGE (SDK Alpine)
 # -----------------------------
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
@@ -36,15 +36,12 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish TaskBoard.Api.csproj -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # -----------------------------
-# 4) FINAL RUNTIME
+# 4) FINAL RUNTIME (Alpine)
 # -----------------------------
 FROM base AS final
 WORKDIR /app
 
 # Copier les fichiers publiés
 COPY --from=publish /app/publish .
-
-# Sécurité : utilisateur non-root (si tu veux)
-# USER $APP_UID
 
 ENTRYPOINT ["dotnet", "TaskBoard.Api.dll"]
