@@ -8,7 +8,7 @@ public static class DatabaseExtensions
     {
         services.AddDbContext<AppDbContext>(options =>
         {
-            options.UseSqlServer(
+            options.UseNpgsql(
                 config.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly("TaskBoard.Infrastructure")
             );

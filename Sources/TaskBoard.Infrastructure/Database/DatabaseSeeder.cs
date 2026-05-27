@@ -11,22 +11,28 @@ public static class DatabaseSeeder
 {
     public static async Task SeedAsync(IServiceProvider services)
     {
-        using var scope = services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-
-        await context.Database.MigrateAsync();
-
-        // Vérifie si un admin existe déjà
-        if (!context.Users.Any(u => u.Email == "admin@taskboard.com"))
+        try
         {
-            var admin = new User(
-                email: "admin@taskboard.com",
-                passwordHash: passwordHasher.Hash("Admin123!")
-            );
+            using var scope = services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
-            context.Users.Add(admin);
-            await context.SaveChangesAsync();
+            await context.Database.MigrateAsync();
+
+            if (!context.Users.Any(u => u.Email == "admin@taskboard.com"))
+            {
+                var admin = new User(
+                    email: "admin@taskboard.com",
+                    passwordHash: passwordHasher.Hash("Admin123!")
+                );
+
+                context.Users.Add(admin);
+                await context.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SEED ERROR: " + ex.Message);
         }
     }
 }
