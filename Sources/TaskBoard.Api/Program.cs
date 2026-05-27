@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Serilog;
 
 using TaskBoard.Api.Extensions;
+using TaskBoard.Api.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 });
 
 app.MapControllers();
+
+await DatabaseSeeder.SeedAsync(app.Services);
 
 app.Run();
 
