@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TaskBoard.Infrastructure.Persistence;
-using TaskBoard.Domain.Entities;
+
 using TaskBoard.Application.Services;
+using TaskBoard.Domain.Entities;
+using TaskBoard.Infrastructure.Persistence;
 
 namespace TaskBoard.Api.Infrastructure.Database;
 
