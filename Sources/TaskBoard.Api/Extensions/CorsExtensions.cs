@@ -12,7 +12,7 @@ public static class CorsExtensions
                              ?? new[]
                              {
                                  "http://localhost:5173",
-                                 "https://taskboard-frontend.onrender.com"
+                                 "https://taskboard-iyec.onrender.com"
                              };
 
         services.AddCors(options =>
