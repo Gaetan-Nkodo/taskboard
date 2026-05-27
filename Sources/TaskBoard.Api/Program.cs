@@ -22,6 +22,7 @@ builder.Host.AddCustomSerilog();
 builder.Services.AddCustomServices();
 builder.Services.AddCustomSwagger();
 builder.Services.AddControllers();
+builder.Services.AddCustomCors(builder.Configuration);
 builder.Services.AddCustomDatabase(builder.Configuration);
 
 // On passe l'environnement à l'extension
@@ -33,6 +34,7 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 app.UseCustomMiddlewares();
+app.UseCustomCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
