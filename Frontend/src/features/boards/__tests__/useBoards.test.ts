@@ -22,5 +22,6 @@ describe("useBoards", () => {
     const board = await createBoard({ name: "Board A" });
 
     expect(board.name).toBe("Board A");
+    expect(spy).toHaveBeenCalled();
   });
 });
