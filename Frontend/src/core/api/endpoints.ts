@@ -1,6 +1,15 @@
 export const API = {
+  // --- Health ---
   health: "/health",
-  tasks: "/api/tasks",
-  boards: "/api/boards",
-  login: "/api/auth/login"
-};
+
+  // --- Auth ---
+  login: "/api/v1/auth/login",
+
+  // --- Boards ---
+  boards: "/api/v1/boards",
+  board: (id: string) => `/api/v1/boards/${id}`,
+
+  // --- Tasks ---
+  tasks: "/api/v1/tasks",
+  task: (id: string) => `/api/v1/tasks/${id}`
+} as const;

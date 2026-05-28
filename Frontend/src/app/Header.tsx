@@ -1,4 +1,4 @@
-import { useAuthContext } from "../features/auth/AuthContext";
+import { useAuthContext } from "../features/auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 
 export default function Header() {

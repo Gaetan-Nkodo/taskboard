@@ -1,5 +1,5 @@
-import { renderHook } from "@testing-library/react";
-import { AuthProvider, useAuthContext } from "../AuthContext";
+import { renderHook, waitFor } from "@testing-library/react";
+import { AuthProvider, useAuthContext } from "../AuthProvider";
 import { describe, it, expect, beforeEach } from "vitest";
 
 describe("AuthProvider", () => {
@@ -7,12 +7,13 @@ describe("AuthProvider", () => {
     localStorage.clear();
   });
 
-  it("auto-login recharge l’utilisateur depuis localStorage", () => {
+  it("auto-login recharge l’utilisateur depuis localStorage", async () => {
     localStorage.setItem("user", JSON.stringify({
       id: "1",
       email: "test@test.com",
       name: "Gaetan"
     }));
+    localStorage.setItem("token", "abc123");
 
     const wrapper = ({ children }: any) => (
       <AuthProvider>{children}</AuthProvider>
@@ -20,6 +21,12 @@ describe("AuthProvider", () => {
 
     const { result } = renderHook(() => useAuthContext(), { wrapper });
 
+    // 🔥 Attendre la fin du loading
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
     expect(result.current.user?.email).toBe("test@test.com");
+    expect(result.current.token).toBe("abc123");
   });
 });

@@ -9,4 +9,5 @@ test("login returns token and user", async () => {
   });
 
   expect(result.token).toBe("abc");
+  expect(result.user).toBeDefined();
 });

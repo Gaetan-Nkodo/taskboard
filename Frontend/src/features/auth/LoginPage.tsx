@@ -1,54 +1,62 @@
 import { useState } from "react";
-import { useAuthContext } from "./AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { AuthService } from "../../core/services/AuthService";
+import { useAuthContext } from "./AuthProvider";
 
 export default function LoginPage() {
-  const { login } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
+  const { setUser, setToken } = useAuthContext();
+
+  const returnTo = location.state?.from || "/boards";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // 🔥 returnTo : si on vient de /boards/123 → on y retourne après login
-  const from = location.state?.from || "/";
-
-  const submit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
     try {
-        await login(email, password);
-        navigate(from);
+      const result = await AuthService.login(email, password);
+      setUser(result.user);
+      setToken(result.token);
+      navigate(returnTo);
     } catch (err: any) {
-        setError(err.message || "Erreur de connexion");
+      setError("Invalid credentials");
     }
-  };
+  }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Connexion</h2>
+    <div className="max-w-sm mx-auto mt-20 p-6 bg-white shadow rounded">
+      <h1 className="text-xl font-bold mb-4">Connexion</h1>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <div className="text-red-600 mb-2">{error}</div>}
 
-      <form onSubmit={submit}>
+      <form role="form" onSubmit={handleSubmit} className="space-y-3">
         <input
+          type="email"
           placeholder="Email"
+          className="w-full border p-2 rounded"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          style={{ display: "block", marginBottom: 10 }}
         />
 
         <input
-          placeholder="Mot de passe"
           type="password"
+          placeholder="Mot de passe"
+          className="w-full border p-2 rounded"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          style={{ display: "block", marginBottom: 10 }}
         />
 
-        <button type="submit">Se connecter</button>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded"
+        >
+          Se connecter
+        </button>
       </form>
     </div>
   );

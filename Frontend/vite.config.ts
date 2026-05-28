@@ -6,7 +6,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: ["./src/tests/setup.ts", "./src/tests-integration/setup.ts"],
-    css: false
+    env: {
+      VITE_API_URL: "http://localhost"
+    },
+    setupFiles: ["./src/setupTests.ts"],
+    css: false,
+    coverage: {
+      reporter: ["text", "html"]
+    }
   }
 });

@@ -9,18 +9,12 @@ export const useAuth = () => {
       body: JSON.stringify(data)
     });
 
-
-    // 🔥 Gestion propre des erreurs serveur
     if (!response.ok) {
       let message = "Erreur de connexion";
-
       try {
         const errorText = await response.text();
         if (errorText) message = errorText;
-      } catch {
-        // ignore
-      }
-
+      } catch {}
       throw new Error(message);
     }
 
@@ -29,7 +23,7 @@ export const useAuth = () => {
     localStorage.setItem("token", result.token);
     localStorage.setItem("user", JSON.stringify(result.user));
 
-    return result.user;
+    return result;
   };
 
   const logout = () => {
@@ -42,5 +36,7 @@ export const useAuth = () => {
     return raw ? JSON.parse(raw) : null;
   };
 
-  return { login, logout, getUser };
+  const getToken = () => localStorage.getItem("token");
+
+  return { login, logout, getUser, getToken };
 };
