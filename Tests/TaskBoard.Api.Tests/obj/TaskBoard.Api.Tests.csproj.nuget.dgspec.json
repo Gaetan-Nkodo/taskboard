@@ -60,10 +60,6 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "AspNetCore.HealthChecks.SqlServer": {
-              "target": "Package",
-              "version": "[8.0.2, )"
-            },
             "FluentValidation": {
               "target": "Package",
               "version": "[12.1.1, )"
@@ -487,11 +483,11 @@
             },
             "Testcontainers": {
               "target": "Package",
-              "version": "[4.5.0, )"
+              "version": "[4.12.0, )"
             },
-            "Testcontainers.MsSql": {
+            "Testcontainers.PostgreSql": {
               "target": "Package",
-              "version": "[4.5.0, )"
+              "version": "[4.12.0, )"
             },
             "coverlet.collector": {
               "target": "Package",

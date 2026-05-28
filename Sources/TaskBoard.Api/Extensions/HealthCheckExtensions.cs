@@ -11,13 +11,7 @@ public static class HealthCheckExtensions
     {
         services.AddHealthChecks()
             .AddCheck<SeqHealthCheck>("seq")
-            .AddCheck("api", () => HealthCheckResult.Healthy("API OK"))
-            .AddSqlServer(
-                connectionString: configuration.GetConnectionString("DefaultConnection")!,
-                name: "sql",
-                timeout: TimeSpan.FromSeconds(3),
-                tags: new[] { "ready" }
-            );
+            .AddCheck("api", () => HealthCheckResult.Healthy("API OK"));
 
         return services;
     }

@@ -14,7 +14,7 @@ public class BoardsTests
 {
     private readonly HttpClient _client;
 
-    public BoardsTests(ApiFactory factory, SqlServerContainerFixture fixture)
+    public BoardsTests(ApiFactory factory, PostgresContainerFixture fixture)
     {
         factory.SetConnectionString(fixture.ConnectionString);
         _client = factory.CreateClient();

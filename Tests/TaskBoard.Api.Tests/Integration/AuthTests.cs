@@ -13,7 +13,7 @@ public class AuthTests
 {
     private readonly HttpClient _client;
 
-    public AuthTests(ApiFactory factory, SqlServerContainerFixture fixture)
+    public AuthTests(ApiFactory factory, PostgresContainerFixture fixture)
     {
         factory.SetConnectionString(fixture.ConnectionString);
         _client = factory.CreateClient();
