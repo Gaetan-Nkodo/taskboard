@@ -24,7 +24,7 @@ public class SqlServerContainerFixture : IAsyncLifetime
         await Container.StartAsync();
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlServer(ConnectionString)
+            .UseNpgsql(ConnectionString)
             .Options;
 
         using var db = new AppDbContext(options);

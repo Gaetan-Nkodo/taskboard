@@ -42,7 +42,7 @@ public class ApiFactory : WebApplicationFactory<Program>
                 services.Remove(descriptor);
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(_connectionString));
+                options.UseNpgsql(_connectionString));
 
             services.PostConfigure<HttpsRedirectionOptions>(options =>
             {

@@ -9,8 +9,8 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
 
-        optionsBuilder.UseSqlServer(
-            "Server=localhost;Database=TaskBoard;Trusted_Connection=True;TrustServerCertificate=True;",
+        optionsBuilder.UseNpgsql(
+            "Host=localhost;Port=5432;Database=taskboard_local;Username=postgres;Password=postgres;SSL Mode=Disable",
             b => b.MigrationsAssembly("TaskBoard.Infrastructure")
         );
 
