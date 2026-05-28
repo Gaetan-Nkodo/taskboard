@@ -1,19 +1,16 @@
-using Microsoft.EntityFrameworkCore;
-
-using TaskBoard.Api;
-using TaskBoard.Infrastructure.Persistence;
-
 using Testcontainers.PostgreSql;
+
+using Xunit;
 
 public class PostgresContainerFixture : IAsyncLifetime
 {
-    public PostgreSqlContainer Container { get; private set; }
+    public PostgreSqlContainer Container { get; private set; } = default!;
 
     public string ConnectionString => Container.GetConnectionString();
 
     public async Task InitializeAsync()
     {
-        Container = new PostgreSqlBuilder()
+        Container = new PostgreSqlBuilder("postgres:16")
             .WithDatabase("taskboard_test")
             .WithUsername("postgres")
             .WithPassword("postgres")
