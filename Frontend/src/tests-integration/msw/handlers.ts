@@ -2,12 +2,41 @@ import { http, HttpResponse } from "msw";
 
 const API_URL = "http://localhost";
 
+type RegisterBody = {
+  email: string;
+  password: string;
+  fullName: string;
+};
+
+type LoginBody = {
+  email: string;
+  password: string;
+};
+
 export const handlers = [
-  // --- Auth ---
-  http.post(`${API_URL}/api/v1/auth/login`, async () => {
+  // --- Auth: Register ---
+  http.post(`${API_URL}/api/v1/auth/register`, async ({ request }) => {
+    const body = (await request.json()) as RegisterBody;
+
     return HttpResponse.json({
-      token: "abc",
-      user: { id: "1", email: "a@test.com", name: "Gaetan" }
+      id: "fake-id",
+      email: body.email,
+      fullName: body.fullName
+    });
+  }),
+
+  // --- Auth: Login ---
+  http.post(`${API_URL}/api/v1/auth/login`, async ({ request }) => {
+    const body = (await request.json()) as LoginBody;
+
+    return HttpResponse.json({
+      accessToken: "fake-jwt",
+      refreshToken: "fake-refresh",
+      user: {
+        id: "fake-id",
+        email: body.email,
+        fullName: "Test User"
+      }
     });
   }),
 
