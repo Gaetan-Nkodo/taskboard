@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 
 using TaskBoard.Api.Tests.Fixtures;
+using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 
 namespace TaskBoard.Api.Tests.Integration;
@@ -20,11 +21,11 @@ public class BoardsTests
         _client = factory.CreateClient();
     }
 
-    private async Task<string> AuthenticateAsync()
+    private async Task AuthenticateAsync()
     {
         var email = $"user{Guid.NewGuid()}@example.com";
 
-        var register = new RegisterUserRequest(email, "P@ssw0rd!");
+        var register = new RegisterUserRequest(email, "P@ssw0rd!", "Test User");
         var regResponse = await _client.PostAsJsonAsync("/api/v1/auth/register", register);
         regResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -32,20 +33,25 @@ public class BoardsTests
         var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login", login);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await loginResponse.Content.ReadFromJsonAsync<LoginResponseDto>();
+        var result = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
         result.Should().NotBeNull();
 
-        return result!.Token;
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result!.AccessToken);
     }
 
     [Fact]
     public async Task CreateBoard_ShouldReturnCreated()
     {
-        var token = await AuthenticateAsync();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await AuthenticateAsync();
 
-        var request = new CreateBoardRequest("My Board", "Desc");
-        var response = await _client.PostAsJsonAsync("/api/v1/boards", request);
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/boards")
+        {
+            Content = JsonContent.Create(new CreateBoardRequest("My Board", "Desc"))
+        };
+
+        request.Headers.Authorization = _client.DefaultRequestHeaders.Authorization;
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
@@ -53,10 +59,12 @@ public class BoardsTests
     [Fact]
     public async Task GetBoards_ShouldReturnList()
     {
-        var token = await AuthenticateAsync();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await AuthenticateAsync();
 
-        var response = await _client.GetAsync("/api/v1/boards");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/boards");
+        request.Headers.Authorization = _client.DefaultRequestHeaders.Authorization;
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }

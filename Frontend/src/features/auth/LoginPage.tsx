@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { AuthService } from "../../core/services/AuthService";
+import { useAuth } from "./useAuth";
 import { useAuthContext } from "./AuthProvider";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setUser, setToken } = useAuthContext();
+
+  const { login } = useAuth();
+  const { setUser, setAccessToken, setRefreshToken } = useAuthContext();
 
   const returnTo = location.state?.from || "/boards";
 
@@ -19,11 +21,14 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const result = await AuthService.login(email, password);
+      const result = await login({ email, password });
+
       setUser(result.user);
-      setToken(result.token);
+      setAccessToken(result.accessToken);
+      setRefreshToken(result.refreshToken);
+
       navigate(returnTo);
-    } catch (err: any) {
+    } catch {
       setError("Invalid credentials");
     }
   }
@@ -34,7 +39,12 @@ export default function LoginPage() {
 
       {error && <div className="text-red-600 mb-2">{error}</div>}
 
-      <form role="form" onSubmit={handleSubmit} className="space-y-3">
+      <form
+        role="form"
+        data-testid="login-form"
+        onSubmit={handleSubmit}
+        className="space-y-3"
+      >
         <input
           type="email"
           placeholder="Email"

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Users;
+using TaskBoard.Domain.Exceptions;
 
 namespace TaskBoard.Api.Controllers;
 
@@ -11,10 +12,10 @@ namespace TaskBoard.Api.Controllers;
 [Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly RegisterUserHandler _registerHandler;
-    private readonly LoginUserHandler _loginHandler;
+    private readonly IRegisterUserHandler _registerHandler;
+    private readonly ILoginUserHandler _loginHandler;
 
-    public AuthController(RegisterUserHandler registerHandler, LoginUserHandler loginHandler)
+    public AuthController(IRegisterUserHandler registerHandler, ILoginUserHandler loginHandler)
     {
         _registerHandler = registerHandler;
         _loginHandler = loginHandler;
@@ -25,14 +26,35 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
     {
         var user = await _registerHandler.Handle(request);
-        return Ok(new UserDto(Id: user.Id, Email: user.Email));
+        return Ok(new UserDto(user.Id, user.Email, user.DisplayName));
     }
 
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginUserRequest request)
     {
-        var result = await _loginHandler.Handle(request);
-        return Ok(new LoginResponseDto(Token: result.Token, User: result.User));
+        try
+        {
+            var result = await _loginHandler.Handle(request);
+
+            return Ok(new
+            {
+                accessToken = result.AccessToken,
+                refreshToken = result.RefreshToken,
+                user = result.User
+            });
+        }
+        catch (InvalidCredentialsException)
+        {
+            return Unauthorized(new { error = "Invalid credentials" });
+        }
+        catch (AccountDisabledException)
+        {
+            return StatusCode(403, new { error = "Account disabled" });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

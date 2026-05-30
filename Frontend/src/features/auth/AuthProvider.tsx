@@ -3,11 +3,13 @@ import type { User } from "../../core/models/User";
 
 interface AuthContextValue {
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   loading: boolean;
 
   setUser: (u: User | null) => void;
-  setToken: (t: string | null) => void;
+  setAccessToken: (t: string | null) => void;
+  setRefreshToken: (t: string | null) => void;
 
   logout: () => void;
 }
@@ -16,17 +18,20 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 🔄 Restauration session
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
+    const storedAccess = localStorage.getItem("token");
+    const storedRefresh = localStorage.getItem("refreshToken");
 
-    if (storedUser && storedToken) {
+    if (storedUser && storedAccess) {
       setUser(JSON.parse(storedUser));
-      setToken(storedToken);
+      setAccessToken(storedAccess);
+      setRefreshToken(storedRefresh);
     }
 
     setLoading(false);
@@ -35,18 +40,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+
     setUser(null);
-    setToken(null);
+    setAccessToken(null);
+    setRefreshToken(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        accessToken,
+        refreshToken,
         loading,
         setUser,
-        setToken,
+        setAccessToken,
+        setRefreshToken,
         logout
       }}
     >

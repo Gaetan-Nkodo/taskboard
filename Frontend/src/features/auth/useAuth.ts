@@ -3,11 +3,11 @@ import type { LoginRequest, LoginResponse } from "../../core/models/Auth";
 
 export const useAuth = () => {
   const login = async (data: LoginRequest) => {
-    const response = await fetch(`${env.apiUrl}/auth/login`, {
+    const response = await fetch(`${env.apiUrl}/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
-    });
+    })
 
     if (!response.ok) {
       let message = "Erreur de connexion";
@@ -20,7 +20,7 @@ export const useAuth = () => {
 
     const result = (await response.json()) as LoginResponse;
 
-    localStorage.setItem("token", result.token);
+    localStorage.setItem("token", result.accessToken);
     localStorage.setItem("user", JSON.stringify(result.user));
 
     return result;

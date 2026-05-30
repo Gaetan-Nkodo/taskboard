@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   email: string;
-  name: string;
+  displayName: string;
 
   role?: "user" | "admin" | "owner";
   avatarUrl?: string;

@@ -7,7 +7,7 @@ using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Users;
 
-public class RegisterUserHandler
+public class RegisterUserHandler : IRegisterUserHandler
 {
     private readonly IUserRepository _users;
     private readonly IPasswordHasher _hasher;
@@ -25,10 +25,10 @@ public class RegisterUserHandler
             throw new DomainException("Email already in use.");
 
         var hash = _hasher.Hash(request.Password);
-        var user = new User(request.Email, hash);
+        var user = new User(request.Email, hash, request.DisplayName);
 
         await _users.AddAsync(user);
 
-        return new UserDto(user.Id, user.Email);
+        return new UserDto(user.Id, user.Email, user.DisplayName);
     }
 }

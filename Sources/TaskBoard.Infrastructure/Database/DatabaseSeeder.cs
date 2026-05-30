@@ -23,12 +23,21 @@ public static class DatabaseSeeder
             {
                 var admin = new User(
                     email: "admin@taskboard.com",
-                    passwordHash: passwordHasher.Hash("Admin123!")
+                    passwordHash: passwordHasher.Hash("Admin123!"),
+                    displayName: "Admin User"
                 );
-
                 context.Users.Add(admin);
                 await context.SaveChangesAsync();
             }
+            else
+            {
+                var existingAdmin = await context.Users.FirstAsync(u => u.Email == "admin@taskboard.com");
+                typeof(User).GetProperty("IsActive")!.SetValue(existingAdmin, true);
+
+                context.Users.Update(existingAdmin);
+                await context.SaveChangesAsync();
+            }
+
         }
         catch (Exception ex)
         {

@@ -7,17 +7,12 @@ public static class MiddlewareExtensions
     {
         app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseMiddleware<LoggingEnrichmentMiddleware>();
-        app.UseMiddleware<ErrorHandlingMiddleware>();
         app.UseMiddleware<RequestLoggingMiddleware>();
 
-        app.UseRouting();
-
-        // Désactiver HTTPS en environnement de test
+        // HTTPS seulement hors tests
         var env = app.ApplicationServices.GetRequiredService<IHostEnvironment>();
         if (!env.IsEnvironment("Testing"))
-        {
             app.UseHttpsRedirection();
-        }
 
         return app;
     }

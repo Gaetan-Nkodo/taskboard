@@ -1,3 +1,3 @@
 namespace TaskBoard.Application.DTOs;
 
-public record LoginResultDto(UserDto User, string Token);
+public record LoginResultDto(string AccessToken, string RefreshToken, UserDto User);

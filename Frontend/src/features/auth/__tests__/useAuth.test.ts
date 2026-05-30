@@ -8,11 +8,13 @@ describe("useAuth", () => {
   });
 
   it("login stocke token et user", async () => {
+    // Mock du fetch
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({
-        token: "abc",
-        user: { id: "1", email: "test@test.com", name: "Gaetan" }
+        accessToken: "abc",
+        refreshToken: "xyz",
+        user: { email: "test@test.com" }
       })
     } as any);
 

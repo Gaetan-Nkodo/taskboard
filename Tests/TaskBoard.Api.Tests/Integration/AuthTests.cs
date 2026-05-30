@@ -1,42 +1,66 @@
-using System.Net;
-using System.Net.Http.Json;
+using System.Text.Json;
 
 using FluentAssertions;
 
-using TaskBoard.Api.Tests.Fixtures;
+using Microsoft.AspNetCore.Mvc;
+
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+
+using TaskBoard.Api.Controllers;
+using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
+using TaskBoard.Application.UseCases.Users;
+using TaskBoard.Domain.Exceptions;
 
-namespace TaskBoard.Api.Tests.Integration;
+namespace TaskBoard.Api.Tests;
 
-[Collection("Api collection")]
-public class AuthTests
+public class AuthControllerTests
 {
-    private readonly HttpClient _client;
+    private readonly ILoginUserHandler _login = Substitute.For<ILoginUserHandler>();
+    private readonly IRegisterUserHandler _register = Substitute.For<IRegisterUserHandler>();
 
-    public AuthTests(ApiFactory factory, PostgresContainerFixture fixture)
+    [Fact]
+    public async Task Login_ShouldReturn200_WithAccessAndRefreshTokens_AndUserDto()
     {
-        factory.SetConnectionString(fixture.ConnectionString);
-        _client = factory.CreateClient();
+        var dto = new LoginResultDto(
+            "ACCESS_TOKEN",
+            "REFRESH_TOKEN",
+            new UserDto(Guid.NewGuid(), "user@example.com", "Test User")
+        );
+
+        _login.Handle(Arg.Any<LoginUserRequest>())
+              .Returns(dto);
+
+        var controller = new AuthController(_register, _login);
+
+        var result = await controller.Login(new LoginUserRequest("user@example.com", "pwd"))
+                     as OkObjectResult;
+
+        result.Should().NotBeNull();
+
+        var json = JsonSerializer.Serialize(result!.Value);
+
+        json.Should().Contain("ACCESS_TOKEN");
+        json.Should().Contain("REFRESH_TOKEN");
+        json.Should().Contain("user");
     }
 
     [Fact]
-    public async Task Register_Then_Login_ShouldReturnJwt()
+    public async Task Login_ShouldReturn401_WhenDomainExceptionThrown()
     {
-        var email = $"user{Guid.NewGuid()}@example.com";
+        _login.Handle(Arg.Any<LoginUserRequest>())
+              .ThrowsAsync(new InvalidCredentialsException());
 
-        var register = new RegisterUserRequest(email, "P@ssw0rd!");
-        var login = new LoginUserRequest(email, "P@ssw0rd!");
+        var controller = new AuthController(_register, _login);
 
-        var regResponse = await _client.PostAsJsonAsync("/api/v1/auth/register", register);
-        regResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login", login);
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var result = await loginResponse.Content.ReadFromJsonAsync<LoginResponseDto>();
+        var result = await controller.Login(new LoginUserRequest("user@example.com", "pwd"))
+                     as UnauthorizedObjectResult;
 
         result.Should().NotBeNull();
-        result!.Token.Should().NotBeNullOrWhiteSpace();
-        result.User.Email.Should().Be(email);
+
+        var json = JsonSerializer.Serialize(result!.Value);
+
+        json.Should().Contain("Invalid credentials");
     }
 }

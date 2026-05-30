@@ -18,44 +18,50 @@ public class RegisterUserHandlerTests
     private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
 
     [Fact]
-    public async Task Handle_ShouldRegisterUser_WhenEmailNotUsed()
+    public async Task Handle_ShouldCreateUser_WhenDataIsValid()
     {
-        // Arrange
-        var request = new RegisterUserRequest("user@example.com", "P@ssw0rd!");
+        var request = new RegisterUserRequest(
+            Email: "new@example.com",
+            Password: "P@ssw0rd!",
+            DisplayName: "Gaetan"
+        );
 
         _users.GetByEmailAsync(request.Email).Returns((User?)null);
-        _hasher.Hash(request.Password).Returns("hashed");
+        _hasher.Hash(request.Password).Returns("HASHED");
 
         var handler = new RegisterUserHandler(_users, _hasher);
 
-        // Act
         var result = await handler.Handle(request);
 
-        // Assert
-        result.Should().BeOfType<UserDto>();
-        result.Email.Should().Be("user@example.com");
+        result.Should().NotBeNull();
+        result.Email.Should().Be("new@example.com");
+        result.DisplayName.Should().Be("Gaetan");
 
         await _users.Received(1).AddAsync(Arg.Is<User>(u =>
-            u.Email == "user@example.com" &&
-            u.PasswordHash == "hashed"
+            u.Email == "new@example.com" &&
+            u.PasswordHash == "HASHED" &&
+            u.DisplayName == "Gaetan"
         ));
     }
 
     [Fact]
-    public async Task Handle_ShouldThrow_WhenEmailAlreadyUsed()
+    public async Task Handle_ShouldThrow_WhenEmailAlreadyExists()
     {
-        // Arrange
-        var request = new RegisterUserRequest("user@example.com", "P@ssw0rd!");
+        var request = new RegisterUserRequest(
+            Email: "exists@example.com",
+            Password: "pwd",
+            DisplayName: "Gaetan"
+        );
 
-        _users.GetByEmailAsync(request.Email).Returns(new User("user@example.com", "hash"));
+        _users.GetByEmailAsync(request.Email)
+              .Returns(new User("exists@example.com", "hash", "Existing"));
 
         var handler = new RegisterUserHandler(_users, _hasher);
 
-        // Act
         var act = () => handler.Handle(request);
 
-        // Assert
-        await act.Should().ThrowAsync<DomainException>()
+        await act.Should()
+            .ThrowAsync<DomainException>()
             .WithMessage("Email already in use.");
     }
 }

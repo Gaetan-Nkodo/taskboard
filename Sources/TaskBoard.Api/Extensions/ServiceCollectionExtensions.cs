@@ -18,14 +18,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // Security
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
 
         // Handlers
-        services.AddScoped<RegisterUserHandler>();
-        services.AddScoped<LoginUserHandler>();
+        services.AddScoped<IRegisterUserHandler, RegisterUserHandler>();
+        services.AddScoped<ILoginUserHandler, LoginUserHandler>();
         services.AddScoped<CreateBoardHandler>();
         services.AddScoped<GetBoardHandler>();
         services.AddScoped<GetBoardsByUserHandler>();

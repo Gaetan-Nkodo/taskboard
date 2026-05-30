@@ -4,6 +4,7 @@ export interface LoginRequest {
   password: string;
 }
 export interface LoginResponse {
-  token: string;
   user: User;
+  accessToken: string;
+  refreshToken: string;
 }

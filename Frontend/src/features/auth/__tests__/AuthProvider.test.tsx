@@ -14,6 +14,7 @@ describe("AuthProvider", () => {
       name: "Gaetan"
     }));
     localStorage.setItem("token", "abc123");
+    localStorage.setItem("refreshToken", "ref456");
 
     const wrapper = ({ children }: any) => (
       <AuthProvider>{children}</AuthProvider>
@@ -21,12 +22,13 @@ describe("AuthProvider", () => {
 
     const { result } = renderHook(() => useAuthContext(), { wrapper });
 
-    // 🔥 Attendre la fin du loading
+    // attendre la fin du loading
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
     expect(result.current.user?.email).toBe("test@test.com");
-    expect(result.current.token).toBe("abc123");
+    expect(result.current.accessToken).toBe("abc123");
+    expect(result.current.refreshToken).toBe("ref456");
   });
 });

@@ -14,7 +14,7 @@ public class UserTests
         var hash = "hashed-password";
 
         // Act
-        var user = new User(email, hash);
+        var user = new User(email, hash, "Test User");
 
         // Assert
         user.Id.Should().NotBe(Guid.Empty);
@@ -29,7 +29,7 @@ public class UserTests
         var email = "invalid-email";
 
         // Act
-        var user = new User(email, "hash");
+        var user = new User(email, "hash", "Test User");
 
         // Assert
         user.Email.Should().Be(email);

@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -88,11 +90,11 @@ public class BoardsController : ControllerBase
 
     private Guid GetUserId()
     {
-        var sub = User.FindFirst("sub")?.Value;
+        var id = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("nameid")?.Value ?? User.FindFirst("userid")?.Value;
 
-        if (string.IsNullOrWhiteSpace(sub))
+        if (string.IsNullOrWhiteSpace(id))
             throw new UnauthorizedAccessException("Missing 'sub' claim in JWT.");
 
-        return Guid.Parse(sub);
+        return Guid.Parse(id);
     }
 }

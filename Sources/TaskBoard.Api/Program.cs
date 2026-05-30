@@ -10,7 +10,7 @@ using TaskBoard.Api.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Désactive le remappage automatique des claims (sub, role, email, etc.)
+// Désactive le remappage automatique des claims
 JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -26,17 +26,20 @@ builder.Services.AddControllers();
 builder.Services.AddCustomCors(builder.Configuration);
 builder.Services.AddCustomDatabase(builder.Configuration);
 
-// On passe l'environnement à l'extension
+// Auth
 builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
 
+// Health checks
 builder.Services.AddCustomHealthChecks(builder.Configuration);
 
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+
+// 🔥 AUTH
+app.UseRouting();
 app.UseCustomMiddlewares();
 app.UseCustomCors();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -46,18 +49,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapHealthChecks("/health/live", new HealthCheckOptions
-{
-    Predicate = _ => false
-});
+// Health checks
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
-
+// 🔥 ENDPOINTS APRÈS AUTH
 app.MapControllers();
 
+// Seed
 await DatabaseSeeder.SeedAsync(app.Services);
 
 app.Run();

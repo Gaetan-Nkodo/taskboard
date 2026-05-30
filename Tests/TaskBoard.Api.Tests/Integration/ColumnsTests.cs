@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 
 using TaskBoard.Api.Tests.Fixtures;
+using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 
 namespace TaskBoard.Api.Tests.Integration;
@@ -25,15 +26,15 @@ public class ColumnsTests
         var email = $"user{Guid.NewGuid()}@example.com";
 
         await _client.PostAsJsonAsync("/api/v1/auth/register",
-            new RegisterUserRequest(email, "P@ssw0rd!"));
+            new RegisterUserRequest(email, "P@ssw0rd!", "Test User"));
 
         var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login",
             new LoginUserRequest(email, "P@ssw0rd!"));
 
-        var login = await loginResponse.Content.ReadFromJsonAsync<LoginResponseDto>();
+        var login = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", login!.Token);
+            new AuthenticationHeaderValue("Bearer", login!.AccessToken);
     }
 
     [Fact]

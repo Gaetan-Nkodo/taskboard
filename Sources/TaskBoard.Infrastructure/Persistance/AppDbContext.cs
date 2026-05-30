@@ -10,7 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<Column> Columns => Set<Column>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<User> Users => Set<User>();
-
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -74,6 +74,30 @@ public class AppDbContext : DbContext
 
             builder.Property(u => u.PasswordHash)
                 .IsRequired();
+
+            builder.Property(u => u.DisplayName)
+                .IsRequired()
+                .HasMaxLength(200);
+            builder.Property(u => u.IsActive)
+                .HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Token)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(x => x.ExpiresAt)
+                .IsRequired();
+
+            entity.Property(x => x.Revoked)
+                .IsRequired();
+
+            entity.HasIndex(x => x.Token)
+                .IsUnique();
         });
     }
 }

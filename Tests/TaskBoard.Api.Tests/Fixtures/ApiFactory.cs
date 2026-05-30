@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+using TaskBoard.Api.Tests.Utils;
+using TaskBoard.Application.Services;
+using TaskBoard.Infrastructure.Persistence;
 
 namespace TaskBoard.Api.Tests.Fixtures;
 
@@ -21,13 +24,18 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
 
-        builder.ConfigureAppConfiguration((context, configBuilder) =>
+        builder.ConfigureAppConfiguration((context, config) =>
         {
             var solutionRoot = FindSolutionRoot(Directory.GetCurrentDirectory());
-            var apiProjectDir = FindProjectDirectory(solutionRoot, "TaskBoard.Api");
+            var apiDir = FindProjectDirectory(solutionRoot, "TaskBoard.Api");
 
-            configBuilder.AddJsonFile(Path.Combine(apiProjectDir, "appsettings.json"), optional: false);
-            configBuilder.AddJsonFile(Path.Combine(apiProjectDir, "appsettings.Development.json"), optional: true);
+            config.AddJsonFile(Path.Combine(apiDir, "appsettings.json"), optional: false);
+            config.AddJsonFile(Path.Combine(apiDir, "appsettings.Development.json"), optional: true);
+
+            // 🔥 Ajout d’un fichier de config spécial tests
+            var testSettings = Path.Combine(apiDir, "appsettings.Test.json");
+            if (File.Exists(testSettings))
+                config.AddJsonFile(testSettings, optional: false);
         });
 
         builder.ConfigureServices(services =>
@@ -35,19 +43,26 @@ public class ApiFactory : WebApplicationFactory<Program>
             if (_connectionString == null)
                 throw new InvalidOperationException("Connection string not set.");
 
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-
-            if (descriptor != null)
-                services.Remove(descriptor);
-
+            // 🔥 Remplace le DbContext
+            services.RemoveAll(typeof(DbContextOptions<AppDbContext>));
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(_connectionString));
 
-            services.PostConfigure<HttpsRedirectionOptions>(options =>
+            // 🔥 Désactive HTTPS obligatoire
+            services.PostConfigure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(o =>
             {
-                options.HttpsPort = null;
+                o.HttpsPort = null;
             });
+
+            // 🔥 Remplace le TokenService par FakeTokenService
+            services.RemoveAll<ITokenService>();
+            services.AddSingleton<ITokenService, FakeTokenService>();
+
+            // 🔥🔥🔥 MIGRATION AUTOMATIQUE POUR LES TESTS 🔥🔥🔥
+            var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Database.Migrate();
         });
     }
 

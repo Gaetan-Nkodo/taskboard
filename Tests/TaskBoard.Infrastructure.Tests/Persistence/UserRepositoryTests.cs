@@ -24,7 +24,7 @@ public class UserRepositoryTests
         using var db = CreateDb();
         var repo = new UserRepository(db);
 
-        var user = new User("user@example.com", "hash");
+        var user = new User("user@example.com", "hash", "Test User");
 
         await repo.AddAsync(user);
 
@@ -37,7 +37,7 @@ public class UserRepositoryTests
         using var db = CreateDb();
         var repo = new UserRepository(db);
 
-        var user = new User("user@example.com", "hash");
+        var user = new User("user@example.com", "hash", "Test User");
         db.Users.Add(user);
         await db.SaveChangesAsync();
 

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { AuthProvider, useAuthContext } from "../AuthProvider";
+import LoginPage from "../LoginPage";
 
-// 1) Mock AuthService AVANT TOUT, avec le BON chemin
-vi.mock("../../../core/services/AuthService");
-
-// 2) Mock router APRÈS
 const navigateMock = vi.fn();
+
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return {
@@ -15,11 +15,10 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// 3) Import APRES les mocks, avec le BON chemin
-import { AuthService } from "../../../core/services/AuthService";
-import LoginPage from "../LoginPage";
-import { AuthProvider } from "../AuthProvider";
-import { MemoryRouter } from "react-router-dom";
+function TestConsumer() {
+  const ctx = useAuthContext();
+  return <div data-testid="ctx">{JSON.stringify(ctx)}</div>;
+}
 
 describe("LoginPage", () => {
   beforeEach(() => {
@@ -27,36 +26,50 @@ describe("LoginPage", () => {
     vi.clearAllMocks();
   });
 
-  it("affiche une erreur si login échoue", async () => {
-    // Mock effectif
-    (AuthService.login as any) = vi.fn().mockRejectedValue(
-      new Error("Invalid credentials")
-    );
+  it("stocke accessToken + refreshToken + userDto et navigue", async () => {
+    // 🔥 MOCK FETCH (pas AuthService)
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        accessToken: "ACCESS_TOKEN",
+        refreshToken: "REFRESH_TOKEN",
+        user: {
+          id: "1",
+          email: "test@test.com",
+          displayName: "Test User"
+        }
+      })
+    } as any);
 
     render(
       <MemoryRouter>
         <AuthProvider>
           <LoginPage />
+          <TestConsumer />
         </AuthProvider>
       </MemoryRouter>
     );
 
-    // Remplir les champs
     fireEvent.change(screen.getByPlaceholderText("Email"), {
-      target: { value: "wrong" }
+      target: { value: "test@test.com" }
     });
 
     fireEvent.change(screen.getByPlaceholderText("Mot de passe"), {
-      target: { value: "wrong" }
+      target: { value: "pwd" }
     });
 
-    // Soumettre le formulaire correctement
-    fireEvent.submit(screen.getByRole("form"));
+    fireEvent.submit(screen.getByTestId("login-form"));
 
-    // Vérifier l'erreur
-    expect(await screen.findByText("Invalid credentials")).toBeInTheDocument();
+    const ctx = JSON.parse((await screen.findByTestId("ctx")).textContent!);
 
-    // Vérifier qu'il n'y a pas eu de navigation
-    expect(navigateMock).not.toHaveBeenCalled();
+    expect(navigateMock).toHaveBeenCalled();
+    expect(ctx.accessToken).toBe("ACCESS_TOKEN");
+    expect(ctx.refreshToken).toBe("REFRESH_TOKEN");
+    expect(ctx.user.email).toBe("test@test.com");
+    expect(ctx.user.displayName).toBe("Test User");
+
+    const saved = JSON.parse(localStorage.getItem("user")!);
+    expect(saved.displayName).toBe("Test User");
+    expect(localStorage.getItem("token")).toBe("ACCESS_TOKEN");
   });
 });

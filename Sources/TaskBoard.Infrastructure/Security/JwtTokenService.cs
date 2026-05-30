@@ -6,30 +6,38 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 using TaskBoard.Application.Services;
+using TaskBoard.Domain.Entities;
+using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Infrastructure.Security;
 
-public class JwtTokenService : ITokenService
+public sealed class JwtTokenService : ITokenService
 {
     private readonly IConfiguration _config;
+    private readonly IRefreshTokenRepository _refreshTokens;
 
-    public JwtTokenService(IConfiguration config)
+    public JwtTokenService(IConfiguration config, IRefreshTokenRepository refreshTokens)
     {
         _config = config;
+        _refreshTokens = refreshTokens;
     }
 
     public string GenerateToken(Guid userId, string email)
     {
-        var key = _config["Jwt:Key"]!;
-        var issuer = _config["Jwt:Issuer"];
-        var audience = _config["Jwt:Audience"];
+        var key = _config["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException("Missing Jwt:Key in configuration.");
+
+        var issuer = _config["Jwt:Issuer"] ?? "TaskBoard";
+        var audience = _config["Jwt:Audience"] ?? "TaskBoardUsers";
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim("sub", userId.ToString()),               // 🔥 obligatoire
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email)
         };
 
@@ -37,10 +45,25 @@ public class JwtTokenService : ITokenService
             issuer,
             audience,
             claims,
-            expires: DateTime.UtcNow.AddHours(12),
+            expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task<string> GenerateRefreshToken(Guid userId)
+    {
+        var token = Guid.NewGuid().ToString("N");
+
+        var refresh = new RefreshToken(
+            userId,
+            token,
+            DateTime.UtcNow.AddDays(7)
+        );
+
+        await _refreshTokens.StoreAsync(refresh);
+
+        return token;
     }
 }

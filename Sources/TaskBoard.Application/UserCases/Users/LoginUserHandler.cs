@@ -6,7 +6,7 @@ using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Application.UseCases.Users;
 
-public class LoginUserHandler
+public class LoginUserHandler : ILoginUserHandler
 {
     private readonly IUserRepository _users;
     private readonly IPasswordHasher _hasher;
@@ -23,13 +23,21 @@ public class LoginUserHandler
     {
         var user = await _users.GetByEmailAsync(request.Email);
         if (user == null)
-            throw new DomainException("User Not Found.");
+            throw new InvalidCredentialsException();
 
         if (!_hasher.Verify(request.Password, user.PasswordHash))
-            throw new DomainException("Invalid credentials.");
+            throw new InvalidCredentialsException();
 
-        var token = _tokens.GenerateToken(user.Id, user.Email);
+        if (!user.IsActive)
+            throw new AccountDisabledException();
 
-        return new LoginResultDto(new UserDto(user.Id, user.Email), token);
+        var accessToken = _tokens.GenerateToken(user.Id, user.Email);
+        var refreshToken = await _tokens.GenerateRefreshToken(user.Id);
+
+        return new LoginResultDto(
+            accessToken,
+            refreshToken,
+            new UserDto(user.Id, user.Email, user.DisplayName)
+        );
     }
 }
