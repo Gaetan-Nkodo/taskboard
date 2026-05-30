@@ -9,7 +9,7 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login"); // redirection ici
+    navigate("/login");
   };
 
   return (
@@ -27,7 +27,7 @@ export default function Header() {
 
       <div>
         <span style={{ marginRight: "15px" }}>
-          Bonjour {user.name}
+          Bonjour {user.displayName}
         </span>
         <button onClick={handleLogout}>Se déconnecter</button>
       </div>
