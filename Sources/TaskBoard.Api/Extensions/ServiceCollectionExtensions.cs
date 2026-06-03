@@ -27,6 +27,8 @@ public static class ServiceCollectionExtensions
         // Handlers
         services.AddScoped<IRegisterUserHandler, RegisterUserHandler>();
         services.AddScoped<ILoginUserHandler, LoginUserHandler>();
+        services.AddScoped<RefreshTokenHandler>();
+        services.AddScoped<LogoutUserHandler>();
         services.AddScoped<CreateBoardHandler>();
         services.AddScoped<GetBoardHandler>();
         services.AddScoped<GetBoardsByUserHandler>();

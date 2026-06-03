@@ -1,6 +1,5 @@
 import Header from "./Header";
-import BoardList from "../features/boards/BoardList";
-import CreateBoardForm from "../features/boards/CreateBoardForm";
+import { Outlet } from "react-router-dom";
 
 function App() {
   return (
@@ -10,8 +9,7 @@ function App() {
       <div style={{ padding: 20 }}>
         <h1>TaskBoard Frontend</h1>
 
-        <CreateBoardForm />
-        <BoardList />
+        <Outlet />
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ export default function Header() {
       style={{
         padding: "10px 20px",
         background: "#f5f5f5",
-        marginBottom: "20px",
+        marginBottom: "5px",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center"

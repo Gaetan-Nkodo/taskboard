@@ -22,6 +22,7 @@ export const useAuth = () => {
 
     localStorage.setItem("token", result.accessToken);
     localStorage.setItem("user", JSON.stringify(result.user));
+    localStorage.setItem("refreshToken", result.refreshToken);
 
     return result;
   };

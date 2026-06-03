@@ -28,11 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedAccess = localStorage.getItem("token");
     const storedRefresh = localStorage.getItem("refreshToken");
 
-    if (storedUser && storedAccess) {
-      setUser(JSON.parse(storedUser));
-      setAccessToken(storedAccess);
-      setRefreshToken(storedRefresh);
-    }
+    if (storedUser) setUser(JSON.parse(storedUser));
+    if (storedAccess) setAccessToken(storedAccess);
+    if (storedRefresh) setRefreshToken(storedRefresh);
 
     setLoading(false);
   }, []);

@@ -5,6 +5,8 @@ export const API = {
   // --- Auth ---
   login: "/api/v1/auth/login",
   register: "/api/v1/auth/register",
+  refresh: "/api/v1/auth/refresh",
+  logout: "/api/v1/auth/logout",
 
   // --- Boards ---
   boards: "/api/v1/boards",

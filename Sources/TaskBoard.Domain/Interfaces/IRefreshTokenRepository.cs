@@ -4,7 +4,11 @@ namespace TaskBoard.Domain.Interfaces;
 
 public interface IRefreshTokenRepository
 {
-    Task StoreAsync(RefreshToken token);
-    Task<RefreshToken?> GetAsync(string token);
-    Task RevokeAsync(string token);
+    Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken ct = default);
+
+    Task StoreAsync(RefreshToken token, CancellationToken ct = default);
+
+    Task RevokeAllForUserAsync(Guid userId, CancellationToken ct = default);
+
+    Task SaveChangesAsync(CancellationToken ct = default);
 }

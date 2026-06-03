@@ -6,4 +6,5 @@ public interface ITokenService
 {
     string GenerateToken(Guid userId, string email);
     Task<string> GenerateRefreshToken(Guid userId);
+    Task<(Guid UserId, string Email)> ValidateAccessTokenAsync(string token);
 }

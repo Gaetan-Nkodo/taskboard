@@ -14,15 +14,11 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <App />
       </ProtectedRoute>
-    )
-  },
-
-  {
-    path: "/boards/:id",
-    element: (
-      <ProtectedRoute>
-        <BoardsPage />
-      </ProtectedRoute>
-    )
+    ),
+    children: [
+      { index: true, element: <BoardsPage /> }, // / → boards
+      { path: "boards", element: <BoardsPage /> },
+      { path: "boards/:id", element: <BoardsPage /> }
+    ]
   }
 ]);

@@ -7,7 +7,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using TaskBoard.Api.Tests.Utils;
 using TaskBoard.Application.Services;
+using TaskBoard.Application.UseCases.Users;
+using TaskBoard.Domain.Interfaces;
 using TaskBoard.Infrastructure.Persistence;
+using TaskBoard.Infrastructure.Persistence.Repositories;
 
 namespace TaskBoard.Api.Tests.Fixtures;
 
@@ -32,7 +35,6 @@ public class ApiFactory : WebApplicationFactory<Program>
             config.AddJsonFile(Path.Combine(apiDir, "appsettings.json"), optional: false);
             config.AddJsonFile(Path.Combine(apiDir, "appsettings.Development.json"), optional: true);
 
-            // 🔥 Ajout d’un fichier de config spécial tests
             var testSettings = Path.Combine(apiDir, "appsettings.Test.json");
             if (File.Exists(testSettings))
                 config.AddJsonFile(testSettings, optional: false);
@@ -43,22 +45,27 @@ public class ApiFactory : WebApplicationFactory<Program>
             if (_connectionString == null)
                 throw new InvalidOperationException("Connection string not set.");
 
-            // 🔥 Remplace le DbContext
+            // Remplace DbContext
             services.RemoveAll(typeof(DbContextOptions<AppDbContext>));
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(_connectionString));
 
-            // 🔥 Désactive HTTPS obligatoire
+            // Désactive HTTPS obligatoire
             services.PostConfigure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(o =>
             {
                 o.HttpsPort = null;
             });
 
-            // 🔥 Remplace le TokenService par FakeTokenService
+            // Remplace TokenService par FakeTokenService
             services.RemoveAll<ITokenService>();
-            services.AddSingleton<ITokenService, FakeTokenService>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<ITokenService, FakeTokenService>();
 
-            // 🔥🔥🔥 MIGRATION AUTOMATIQUE POUR LES TESTS 🔥🔥🔥
+            // 🔥 Ajout des handlers nécessaires au AuthController
+            services.AddScoped<RefreshTokenHandler>();
+            services.AddScoped<LogoutUserHandler>();
+
+            // MIGRATION AUTO
             var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

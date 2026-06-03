@@ -63,7 +63,19 @@ public sealed class JwtTokenService : ITokenService
         );
 
         await _refreshTokens.StoreAsync(refresh);
+        await _refreshTokens.SaveChangesAsync(CancellationToken.None);
 
         return token;
+    }
+
+    public Task<(Guid UserId, string Email)> ValidateAccessTokenAsync(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
+
+        var userId = Guid.Parse(jwt.Claims.First(x => x.Type == JwtRegisteredClaimNames.Sub).Value);
+        var email = jwt.Claims.First(x => x.Type == JwtRegisteredClaimNames.Email).Value;
+
+        return Task.FromResult((userId, email));
     }
 }

@@ -485,6 +485,10 @@
               "target": "Package",
               "version": "[5.3.0, )"
             },
+            "ReportGenerator": {
+              "target": "Package",
+              "version": "[5.5.10, )"
+            },
             "Testcontainers": {
               "target": "Package",
               "version": "[4.12.0, )"

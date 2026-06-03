@@ -6,16 +6,20 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 using TaskBoard.Application.Services;
+using TaskBoard.Domain.Entities;
+using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Api.Tests.Utils;
 
 public sealed class FakeTokenService : ITokenService
 {
     private readonly IConfiguration _config;
+    private readonly IRefreshTokenRepository _refreshRepo;
 
-    public FakeTokenService(IConfiguration config)
+    public FakeTokenService(IConfiguration config, IRefreshTokenRepository refreshRepo)
     {
         _config = config;
+        _refreshRepo = refreshRepo;
     }
 
     public string GenerateToken(Guid userId, string email)
@@ -25,7 +29,7 @@ public sealed class FakeTokenService : ITokenService
 
         var claims = new[]
         {
-            new Claim("sub", userId.ToString()),               // 🔥 obligatoire
+            new Claim("sub", userId.ToString()),
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email)
         };
@@ -41,6 +45,24 @@ public sealed class FakeTokenService : ITokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public Task<string> GenerateRefreshToken(Guid userId)
-        => Task.FromResult("TEST_REFRESH_TOKEN");
+    public async Task<string> GenerateRefreshToken(Guid userId)
+    {
+        var token = Guid.NewGuid().ToString("N");
+
+        var refresh = new RefreshToken(
+            userId,
+            token,
+            DateTime.UtcNow.AddHours(1)
+        );
+
+        await _refreshRepo.StoreAsync(refresh);
+        await _refreshRepo.SaveChangesAsync();
+
+        return token;
+    }
+
+    public Task<(Guid UserId, string Email)> ValidateAccessTokenAsync(string token)
+    {
+        return Task.FromResult((Guid.NewGuid(), "fake@test.com"));
+    }
 }

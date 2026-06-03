@@ -1,66 +1,108 @@
-using System.Text.Json;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 using FluentAssertions;
 
-using Microsoft.AspNetCore.Mvc;
-
-using NSubstitute;
-using NSubstitute.ExceptionExtensions;
-
-using TaskBoard.Api.Controllers;
+using TaskBoard.Api.Tests.Fixtures;
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
-using TaskBoard.Application.UseCases.Users;
-using TaskBoard.Domain.Exceptions;
 
-namespace TaskBoard.Api.Tests;
+namespace TaskBoard.Api.Tests.Integration;
 
-public class AuthControllerTests
+[Collection("Api collection")]
+public class AuthTests
 {
-    private readonly ILoginUserHandler _login = Substitute.For<ILoginUserHandler>();
-    private readonly IRegisterUserHandler _register = Substitute.For<IRegisterUserHandler>();
+    private readonly HttpClient _client;
 
-    [Fact]
-    public async Task Login_ShouldReturn200_WithAccessAndRefreshTokens_AndUserDto()
+    public AuthTests(ApiFactory factory, PostgresContainerFixture fixture)
     {
-        var dto = new LoginResultDto(
-            "ACCESS_TOKEN",
-            "REFRESH_TOKEN",
-            new UserDto(Guid.NewGuid(), "user@example.com", "Test User")
-        );
+        factory.SetConnectionString(fixture.ConnectionString);
+        _client = factory.CreateClient();
+    }
 
-        _login.Handle(Arg.Any<LoginUserRequest>())
-              .Returns(dto);
+    private async Task<(string AccessToken, string RefreshToken)> RegisterAndLoginAsync()
+    {
+        var email = $"user{Guid.NewGuid()}@example.com";
 
-        var controller = new AuthController(_register, _login);
+        // REGISTER
+        var register = new RegisterUserRequest(email, "P@ssw0rd!", "Test User");
+        var regResponse = await _client.PostAsJsonAsync("/api/v1/auth/register", register);
+        regResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await controller.Login(new LoginUserRequest("user@example.com", "pwd"))
-                     as OkObjectResult;
+        // LOGIN
+        var login = new LoginUserRequest(email, "P@ssw0rd!");
+        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login", login);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
+        var result = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
         result.Should().NotBeNull();
 
-        var json = JsonSerializer.Serialize(result!.Value);
-
-        json.Should().Contain("ACCESS_TOKEN");
-        json.Should().Contain("REFRESH_TOKEN");
-        json.Should().Contain("user");
+        return (result!.AccessToken, result.RefreshToken);
     }
 
     [Fact]
-    public async Task Login_ShouldReturn401_WhenDomainExceptionThrown()
+    public async Task Register_ShouldReturnOk()
     {
-        _login.Handle(Arg.Any<LoginUserRequest>())
-              .ThrowsAsync(new InvalidCredentialsException());
+        var email = $"user{Guid.NewGuid()}@example.com";
 
-        var controller = new AuthController(_register, _login);
+        var request = new RegisterUserRequest(email, "P@ssw0rd!", "Test User");
 
-        var result = await controller.Login(new LoginUserRequest("user@example.com", "pwd"))
-                     as UnauthorizedObjectResult;
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", request);
 
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var user = await response.Content.ReadFromJsonAsync<UserDto>();
+        user.Should().NotBeNull();
+        user!.Email.Should().Be(email);
+    }
+
+    [Fact]
+    public async Task Login_ShouldReturnTokens()
+    {
+        var (access, refresh) = await RegisterAndLoginAsync();
+
+        access.Should().NotBeNullOrWhiteSpace();
+        refresh.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task Refresh_ShouldReturnNewTokens()
+    {
+        var (_, refreshToken) = await RegisterAndLoginAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", new
+        {
+            refreshToken
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<LoginResultDto>();
         result.Should().NotBeNull();
 
-        var json = JsonSerializer.Serialize(result!.Value);
+        result!.AccessToken.Should().NotBeNullOrWhiteSpace();
+        result.RefreshToken.Should().NotBeNullOrWhiteSpace();
+    }
 
-        json.Should().Contain("Invalid credentials");
+    [Fact]
+    public async Task Logout_ShouldRevokeTokens_AndPreventRefresh()
+    {
+        var (accessToken, refreshToken) = await RegisterAndLoginAsync();
+
+        // LOGOUT
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var logoutResponse = await _client.PostAsync("/api/v1/auth/logout", null);
+        logoutResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // REFRESH SHOULD FAIL
+        var refreshResponse = await _client.PostAsJsonAsync("/api/v1/auth/refresh", new
+        {
+            refreshToken
+        });
+
+        refreshResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

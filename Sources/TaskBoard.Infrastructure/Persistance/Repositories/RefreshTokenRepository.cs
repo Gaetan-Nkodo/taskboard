@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Interfaces;
+using TaskBoard.Infrastructure.Persistence;
 
 namespace TaskBoard.Infrastructure.Persistence.Repositories;
 
-public sealed class RefreshTokenRepository : IRefreshTokenRepository
+public class RefreshTokenRepository : IRefreshTokenRepository
 {
     private readonly AppDbContext _db;
 
@@ -14,26 +15,24 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
         _db = db;
     }
 
-    public async Task StoreAsync(RefreshToken token)
+    public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken ct = default)
+        => _db.RefreshTokens.FirstOrDefaultAsync(r => r.Token == token, ct);
+
+    public async Task StoreAsync(RefreshToken token, CancellationToken ct = default)
     {
-        _db.RefreshTokens.Add(token);
-        await _db.SaveChangesAsync();
+        await _db.RefreshTokens.AddAsync(token, ct);
     }
 
-    public async Task<RefreshToken?> GetAsync(string token)
+    public async Task RevokeAllForUserAsync(Guid userId, CancellationToken ct = default)
     {
-        return await _db.RefreshTokens
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Token == token && !x.Revoked);
+        var tokens = await _db.RefreshTokens
+            .Where(r => r.UserId == userId && !r.Revoked)
+            .ToListAsync(ct);
+
+        foreach (var t in tokens)
+            t.Revoke();
     }
 
-    public async Task RevokeAsync(string token)
-    {
-        var rt = await _db.RefreshTokens.FirstOrDefaultAsync(x => x.Token == token);
-        if (rt != null)
-        {
-            rt.Revoke();
-            await _db.SaveChangesAsync();
-        }
-    }
+    public Task SaveChangesAsync(CancellationToken ct = default)
+        => _db.SaveChangesAsync(ct);
 }
