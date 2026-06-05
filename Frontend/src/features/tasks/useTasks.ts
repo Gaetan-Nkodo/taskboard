@@ -1,21 +1,18 @@
-import { http } from "../../core/api/httpClient";
+import { useEffect, useState } from "react";
+import { useApiClient } from "../../core/api/apiClient";
 import { API } from "../../core/api/endpoints";
 import type { Task } from "../../core/models/Task";
 
-export const useTasks = () => {
-  const getTasks = () => http<Task[]>(API.tasks);
+export function useTasks() {
+  const api = useApiClient();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const createTask = (data: { title: string; boardId: string }) =>
-    http<Task>(API.tasks, {
-      method: "POST",
-      body: JSON.stringify(data)
-    });
+  useEffect(() => {
+    api.get<Task[]>(API.tasks)
+      .then(setTasks)
+      .finally(() => setLoading(false));
+  }, []);
 
-  const updateTask = (id: string, data: Partial<Task>) =>
-    http<Task>(`${API.tasks}/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data)
-    });
-
-  return { getTasks, createTask, updateTask };
-};
+  return { tasks, loading };
+}

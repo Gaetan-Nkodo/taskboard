@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { User } from "../../core/models/User";
+import type { LoginResponse } from "../../core/models/Auth";
 
 interface AuthContextValue {
   user: User | null;
@@ -12,6 +13,8 @@ interface AuthContextValue {
   setRefreshToken: (t: string | null) => void;
 
   logout: () => void;
+
+  applyTokens: (result: LoginResponse) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -25,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 🔄 Restauration session
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    const storedAccess = localStorage.getItem("token");
+    const storedAccess = localStorage.getItem("accessToken");   // <-- FIX
     const storedRefresh = localStorage.getItem("refreshToken");
 
     if (storedUser) setUser(JSON.parse(storedUser));
@@ -37,12 +40,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");   // <-- FIX
     localStorage.removeItem("refreshToken");
 
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
+  };
+
+  const applyTokens = (result: LoginResponse) => {
+    setUser(result.user);
+    setAccessToken(result.accessToken);
+    setRefreshToken(result.refreshToken);
+
+    localStorage.setItem("user", JSON.stringify(result.user));
+    localStorage.setItem("accessToken", result.accessToken);   // <-- FIX
+    localStorage.setItem("refreshToken", result.refreshToken);
   };
 
   return (
@@ -55,7 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser,
         setAccessToken,
         setRefreshToken,
-        logout
+        logout,
+        applyTokens
       }}
     >
       {children}

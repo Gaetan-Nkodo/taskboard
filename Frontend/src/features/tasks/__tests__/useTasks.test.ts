@@ -1,32 +1,35 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
 import { useTasks } from "../useTasks";
-import * as httpModule from "../../../core/api/httpClient";
+
+// --- MOCK useApiClient ---
+const mockGet = vi.fn();
+
+vi.mock("../../../core/api/apiClient", () => ({
+  useApiClient: () => ({
+    get: mockGet
+  })
+}));
 
 describe("useTasks", () => {
-  it("getTasks appelle l’API", async () => {
-    const spy = vi
-      .spyOn(httpModule, "http")
-      .mockResolvedValue([{ id: "1", title: "Test", status: "Todo", boardId: "b1" }]);
-
-    const { getTasks } = useTasks();
-    const tasks = await getTasks();
-
-    expect(spy).toHaveBeenCalled();
-    expect(tasks).toHaveLength(1);
+  beforeEach(() => {
+    mockGet.mockReset();
   });
 
-  it("createTask envoie les données", async () => {
-    const spy = vi.spyOn(httpModule, "http").mockResolvedValue({
-      id: "1",
-      title: "New",
-      status: "Todo",
-      boardId: "b1"
+  it("charge les tâches au montage", async () => {
+    mockGet.mockResolvedValue([
+      { id: "1", title: "Test", status: "Todo", boardId: "b1" }
+    ]);
+
+    const { result } = renderHook(() => useTasks());
+
+    // loading = true au début
+    expect(result.current.loading).toBe(true);
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledTimes(1);
+      expect(result.current.tasks).toHaveLength(1);
+      expect(result.current.loading).toBe(false);
     });
-
-    const { createTask } = useTasks();
-    const task = await createTask({ title: "New", boardId: "b1" });
-
-    expect(spy).toHaveBeenCalled();
-    expect(task.title).toBe("New");
   });
 });

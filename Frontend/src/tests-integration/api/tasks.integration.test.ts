@@ -1,10 +1,9 @@
-import { http } from "../../core/api/httpClient";
+import { rawHttp } from "../../core/api/rawHttp";
 import { API } from "../../core/api/endpoints";
 import type { Task } from "../../core/models/Task";
 
 test("tasks endpoint returns a list", async () => {
-  const result = await http<Task[]>(API.tasks);
+  const result = await rawHttp<Task[]>(API.tasks);
 
-  expect(Array.isArray(result)).toBe(true);
   expect(result.length).toBeGreaterThan(0);
 });

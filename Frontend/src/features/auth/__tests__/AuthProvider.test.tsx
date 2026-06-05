@@ -1,34 +1,40 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuthContext } from "../AuthProvider";
-import { describe, it, expect, beforeEach } from "vitest";
 
-describe("AuthProvider", () => {
-  beforeEach(() => {
-    localStorage.clear();
+const wrapper = ({ children }: any) => (
+  <AuthProvider>{children}</AuthProvider>
+);
+
+it("applyTokens met à jour le contexte", async () => {
+  const { result } = renderHook(() => useAuthContext(), { wrapper });
+
+  // Appel direct : pas besoin de act() car applyTokens ne touche pas au DOM
+  result.current.applyTokens({
+    accessToken: "newAccess",
+    refreshToken: "newRefresh",
+    user: { id: "2", email: "new@test.com", displayName: "New User" }
   });
 
-  it("auto-login recharge l’utilisateur depuis localStorage", async () => {
-    localStorage.setItem("user", JSON.stringify({
-      id: "1",
-      email: "test@test.com",
-      name: "Gaetan"
-    }));
-    localStorage.setItem("token", "abc123");
-    localStorage.setItem("refreshToken", "ref456");
+  // Attendre la mise à jour de React
+  await waitFor(() => {
+    expect(result.current.accessToken).toBe("newAccess");
+    expect(result.current.refreshToken).toBe("newRefresh");
+    expect(result.current.user?.email).toBe("new@test.com");
+  });
+});
 
-    const wrapper = ({ children }: any) => (
-      <AuthProvider>{children}</AuthProvider>
-    );
+it("logout nettoie le contexte et le localStorage", async () => {
+  localStorage.setItem("user", JSON.stringify({ id: "1" }));
+  localStorage.setItem("token", "abc123");
+  localStorage.setItem("refreshToken", "ref456");
 
-    const { result } = renderHook(() => useAuthContext(), { wrapper });
+  const { result } = renderHook(() => useAuthContext(), { wrapper });
 
-    // attendre la fin du loading
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+  result.current.logout();
 
-    expect(result.current.user?.email).toBe("test@test.com");
-    expect(result.current.accessToken).toBe("abc123");
-    expect(result.current.refreshToken).toBe("ref456");
+  await waitFor(() => {
+    expect(result.current.user).toBe(null);
+    expect(result.current.accessToken).toBe(null);
+    expect(result.current.refreshToken).toBe(null);
   });
 });

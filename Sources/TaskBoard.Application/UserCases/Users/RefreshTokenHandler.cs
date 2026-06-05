@@ -29,7 +29,10 @@ public class RefreshTokenHandler
             throw new InvalidCredentialsException();
 
         var user = await _users.GetByIdAsync(stored.UserId);
-        if (user is null || !user.IsActive)
+        if (user is null)
+            throw new InvalidCredentialsException();
+
+        if (!user.IsActive)
             throw new AccountDisabledException();
 
         stored.Revoke();
@@ -44,4 +47,5 @@ public class RefreshTokenHandler
             new UserDto(user.Id, user.Email, user.DisplayName)
         );
     }
+
 }

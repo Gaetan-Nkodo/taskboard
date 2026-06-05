@@ -1,27 +1,39 @@
-import { describe, it, expect, vi } from "vitest";
+import { renderHook } from "@testing-library/react";
 import { useBoards } from "../useBoards";
-import * as httpModule from "../../../core/api/httpClient";
+
+// On mocke useApiClient, pas BoardService
+const mockGet = vi.fn();
+
+vi.mock("../../../core/api/apiClient", () => ({
+  useApiClient: () => ({
+    get: mockGet
+  })
+}));
 
 describe("useBoards", () => {
-  it("getBoards appelle l’API", async () => {
-    const spy = vi.spyOn(httpModule, "http").mockResolvedValue([]);
-
-    const { getBoards } = useBoards();
-    await getBoards();
-
-    expect(spy).toHaveBeenCalled();
+  beforeEach(() => {
+    mockGet.mockReset();
   });
 
-  it("createBoard envoie les données", async () => {
-    const spy = vi.spyOn(httpModule, "http").mockResolvedValue({
-      id: "1",
-      name: "Board A"
+  it("charge les boards au montage", async () => {
+    mockGet.mockResolvedValue([
+      { id: "1", name: "Board A", description: "Desc A" }
+    ]);
+
+    const { result } = renderHook(() => useBoards());
+
+    // Attendre la fin du chargement
+    await vi.waitFor(() => {
+      expect(result.current.loading).toBe(false);
     });
 
-    const { createBoard } = useBoards();
-    const board = await createBoard({ name: "Board A" });
+    // Vérifier les données
+    expect(result.current.boards).toEqual([
+      { id: "1", name: "Board A", description: "Desc A" }
+    ]);
 
-    expect(board.name).toBe("Board A");
-    expect(spy).toHaveBeenCalled();
+    // Vérifier que l’API a été appelée une seule fois
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockGet).toHaveBeenCalledWith("/api/v1/boards");
   });
 });

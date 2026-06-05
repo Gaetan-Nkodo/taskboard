@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
-import { BoardService } from "../../core/services/BoardService";
+import { useBoardService } from "../../core/services/BoardService";
 import { useAuthContext } from "../auth/AuthProvider";
 import type { Board } from "../../core/models/Board";
 import { Link } from "react-router-dom";
 
 export function BoardsPage() {
   const { user, loading } = useAuthContext();
+  const boardService = useBoardService();
+
   const [boards, setBoards] = useState<Board[]>([]);
   const [isLoadingBoards, setIsLoadingBoards] = useState(true);
 
   useEffect(() => {
     if (loading || !user) return;
 
-    BoardService.getAll()
+    boardService
+      .getAll()
       .then(setBoards)
       .finally(() => setIsLoadingBoards(false));
-  }, [loading, user]);
+  }, [loading, user, boardService]);
 
   if (loading) return <div>Chargement...</div>;
   if (!user) return <div>Non autorisé</div>;

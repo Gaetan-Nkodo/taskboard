@@ -99,4 +99,34 @@ public class RefreshTokenHandlerTests
 
         await act.Should().ThrowAsync<AccountDisabledException>();
     }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenRefreshTokenNotFound()
+    {
+        _repo.GetByTokenAsync("MISSING", Arg.Any<CancellationToken>())
+             .Returns((RefreshToken?)null);
+
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+
+        var act = () => handler.Handle(new RefreshTokenRequest("MISSING"));
+
+        await act.Should().ThrowAsync<InvalidCredentialsException>();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenUserNotFound()
+    {
+        var stored = new RefreshToken(Guid.NewGuid(), "OLD", DateTime.UtcNow.AddMinutes(10));
+
+        _repo.GetByTokenAsync("OLD", Arg.Any<CancellationToken>())
+             .Returns(stored);
+
+        _users.GetByIdAsync(stored.UserId).Returns((User?)null);
+
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+
+        var act = () => handler.Handle(new RefreshTokenRequest("OLD"));
+
+        await act.Should().ThrowAsync<InvalidCredentialsException>();
+    }
 }

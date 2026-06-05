@@ -1,18 +1,18 @@
-import { http } from "../../core/api/httpClient";
+import { useEffect, useState } from "react";
+import { useApiClient } from "../../core/api/apiClient";
 import { API } from "../../core/api/endpoints";
 import type { Board } from "../../core/models/Board";
 
-export const useBoards = () => {
-  const getBoards = () => http<Board[]>(API.boards);
+export function useBoards() {
+  const api = useApiClient();
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getBoard = (id: string) =>
-    http<Board>(`${API.boards}/${id}`);
+  useEffect(() => {
+    api.get<Board[]>(API.boards)
+      .then(setBoards)
+      .finally(() => setLoading(false));
+  }, []);
 
-  const createBoard = (data: { name: string; description?: string }) =>
-    http<Board>(API.boards, {
-      method: "POST",
-      body: JSON.stringify(data)
-    });
-
-  return { getBoards, getBoard, createBoard };
-};
+  return { boards, loading };
+}
