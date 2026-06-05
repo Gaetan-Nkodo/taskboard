@@ -9,10 +9,20 @@ export function useBoards() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<Board[]>(API.boards)
-      .then(setBoards)
-      .finally(() => setLoading(false));
+    getBoards().finally(() => setLoading(false));
   }, []);
 
-  return { boards, loading };
+  async function getBoards() {
+    const data = await api.get<Board[]>(API.boards);
+    setBoards(data);
+    return data;
+  }
+
+  async function createBoard(input: { name: string; description: string }) {
+    const created = await api.post<Board>(API.boards, input);
+    setBoards(prev => [...prev, created]);
+    return created;
+  }
+
+  return { boards, loading, getBoards, createBoard };
 }

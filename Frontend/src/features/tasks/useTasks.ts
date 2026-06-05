@@ -8,11 +8,22 @@ export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Charge automatiquement les tâches
   useEffect(() => {
-    api.get<Task[]>(API.tasks)
-      .then(setTasks)
-      .finally(() => setLoading(false));
+    getTasks().finally(() => setLoading(false));
   }, []);
 
-  return { tasks, loading };
+  async function getTasks() {
+    const data = await api.get<Task[]>(API.tasks);
+    setTasks(data);
+    return data;
+  }
+
+  async function createTask(input: { title: string; boardId: string }) {
+    const created = await api.post<Task>(API.tasks, input);
+    setTasks(prev => [...prev, created]);
+    return created;
+  }
+
+  return { tasks, loading, getTasks, createTask };
 }
