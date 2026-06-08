@@ -28,7 +28,7 @@ export function useHttp() {
         return http<T>(url, options, false);
       }
       
-      auth.logout();
+      auth.logout("expired");
       logout();
       throw new Error("Session expired");
     }

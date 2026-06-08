@@ -3,7 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuthContext } from "../../../features/auth/AuthProvider";
 import { useHttp } from "../httpClient";
 
-// --- MOCK AUTH SERVICE (SINGLETON) ---
+// --- MOCK AUTH SERVICE ---
 const authMock = {
   refresh: vi.fn(),
   getAccessToken: vi.fn(),
@@ -14,14 +14,14 @@ vi.mock("../../services/AuthService", () => ({
   useAuthService: () => authMock
 }));
 
-// --- MOCK FETCH RESPONSE ---
+// --- MOCK FETCH ---
 const mockResponse = (data: any, status = 200): Response =>
   new Response(JSON.stringify(data), {
     status,
     headers: { "Content-Type": "application/json" }
   });
 
-// --- HOOK COMBINÉ POUR AVOIR UN SEUL CONTEXTE ---
+// --- HOOK COMBINÉ ---
 function useBoth() {
   return {
     ctx: useAuthContext(),
@@ -29,7 +29,7 @@ function useBoth() {
   };
 }
 
-describe("httpClient", () => {
+describe("useHttp", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     authMock.refresh.mockReset();
@@ -42,7 +42,7 @@ describe("httpClient", () => {
     <AuthProvider>{children}</AuthProvider>
   );
 
-  it("réessaie après un 401 et applique les nouveaux tokens", async () => {
+  it("réessaie après un 401, applique les nouveaux tokens et renvoie la réponse", async () => {
     authMock.getAccessToken.mockReturnValue("oldToken");
 
     vi.spyOn(globalThis, "fetch")
@@ -60,11 +60,12 @@ describe("httpClient", () => {
     const response = await result.current.http<{ ok: boolean }>("/test");
     expect(response.ok).toBe(true);
 
-    rerender(); // force la propagation du contexte
+    rerender();
 
     await waitFor(() => {
       expect(result.current.ctx.accessToken).toBe("newAccess");
       expect(result.current.ctx.refreshToken).toBe("newRefresh");
+      expect(result.current.ctx.user?.email).toBe("test@test.com");
     });
   });
 
@@ -82,8 +83,10 @@ describe("httpClient", () => {
 
     await waitFor(() => {
       expect(result.current.ctx.user).toBe(null);
+      expect(result.current.ctx.accessToken).toBe(null);
+      expect(result.current.ctx.refreshToken).toBe(null);
     });
 
-    expect(authMock.logout).toHaveBeenCalled();
+    expect(authMock.logout).toHaveBeenCalledWith("expired");
   });
 });

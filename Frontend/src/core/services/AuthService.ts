@@ -46,8 +46,9 @@ export function useAuthService() {
     }
   }
 
-  function logout() {
+  function logout(reason?: string) {
     localStorage.clear();
+    if (reason) localStorage.setItem("logoutReason", reason);
     window.location.href = "/login";
   }
 
