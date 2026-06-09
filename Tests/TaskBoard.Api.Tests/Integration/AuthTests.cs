@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using TaskBoard.Api.Tests.Fixtures;
 using TaskBoard.Api.Tests.Utils;
 using TaskBoard.Application.DTOs;
@@ -204,4 +206,164 @@ public class AuthTests
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldAlwaysReturnOk()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new
+        {
+            email = "unknown@example.com"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturnOk_EvenIfEmailDoesNotExist()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new
+        {
+            email = "unknown@example.com"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldCreateToken_AndSendEmail()
+    {
+        using var scope = new ApiScope(_factory);
+        var db = scope.Db;
+
+        var user = new User("test@example.com", "hash", "Test User");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new
+        {
+            email = "test@example.com"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var token = db.PasswordResetTokens.FirstOrDefault(t => t.UserId == user.Id);
+        token.Should().NotBeNull();
+        token!.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
+
+        var emailService = _factory.Services.GetRequiredService<IEmailService>() as FakeEmailService;
+        emailService!.Sent.Should().ContainSingle();
+        emailService.Sent[0].Email.Should().Be("test@example.com");
+        emailService.Sent[0].Link.Should().Contain(token.Token);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldFail_WhenTokenDoesNotExist()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", new
+        {
+            token = "UNKNOWN",
+            newPassword = "P@ssw0rd!"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldFail_WhenTokenExpired()
+    {
+        using var scope = new ApiScope(_factory);
+        var db = scope.Db;
+
+        var user = new User("expired@example.com", "hash", "Expired User");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var token = new PasswordResetToken(
+            user.Id,
+            "EXPIRED",
+            DateTime.UtcNow.AddMinutes(-10)
+        );
+
+        db.PasswordResetTokens.Add(token);
+        await db.SaveChangesAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", new
+        {
+            token = "EXPIRED",
+            newPassword = "NewP@ssw0rd!"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldFail_WhenTokenAlreadyUsed()
+    {
+        using var scope = new ApiScope(_factory);
+        var db = scope.Db;
+
+        var user = new User("used@example.com", "hash", "Used User");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var token = new PasswordResetToken(
+            user.Id,
+            "USED",
+            DateTime.UtcNow.AddMinutes(10)
+        );
+        token.MarkUsed();
+
+        db.PasswordResetTokens.Add(token);
+        await db.SaveChangesAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", new
+        {
+            token = "USED",
+            newPassword = "NewP@ssw0rd!"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldUpdatePassword_AndRevokeRefreshTokens()
+    {
+        using var scope = new ApiScope(_factory);
+        var db = scope.Db;
+
+        var user = new User("valid@example.com", "oldhash", "Valid User");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var token = new PasswordResetToken(
+            user.Id,
+            "VALID",
+            DateTime.UtcNow.AddMinutes(10)
+        );
+
+        db.PasswordResetTokens.Add(token);
+
+        var refresh = new RefreshToken(user.Id, "REFRESH1", DateTime.UtcNow.AddDays(1));
+        db.RefreshTokens.Add(refresh);
+
+        await db.SaveChangesAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", new
+        {
+            token = "VALID",
+            newPassword = "NewP@ssw0rd!"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updated = await db.Users.FindAsync(user.Id);
+        updated!.PasswordHash.Should().NotBe("oldhash");
+
+        var updatedToken = await db.PasswordResetTokens.FindAsync(token.Id);
+        updatedToken!.Used.Should().BeTrue();
+
+        var revoked = await db.RefreshTokens.FindAsync(refresh.Id);
+        revoked!.Revoked.Should().BeTrue();
+    }
+
 }

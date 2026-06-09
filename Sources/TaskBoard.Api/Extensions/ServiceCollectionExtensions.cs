@@ -1,5 +1,6 @@
 using FluentValidation;
 
+using TaskBoard.Application.Requests;
 using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Application.UseCases.Tasks;
@@ -19,6 +20,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBoardRepository, BoardRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+
 
         // Security
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
@@ -37,9 +40,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CreateTaskHandler>();
         services.AddScoped<UpdateTaskHandler>();
         services.AddScoped<DeleteTaskHandler>();
+        services.AddScoped<ForgotPasswordHandler>();
+        services.AddScoped<ResetPasswordHandler>();
 
         // Validators (un seul appel suffit)
         services.AddValidatorsFromAssembly(typeof(CreateBoardRequestValidator).Assembly);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ForgotPasswordRequest).Assembly));
+
 
         return services;
     }

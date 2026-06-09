@@ -46,9 +46,13 @@ public class ApiFactory : WebApplicationFactory<Program>
                 throw new InvalidOperationException("Connection string not set.");
 
             // Remplace DbContext
-            services.RemoveAll(typeof(DbContextOptions<AppDbContext>));
+            services.RemoveAll<AppDbContext>();
+            services.RemoveAll<DbContextOptions>();
+            services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(_connectionString));
+                    options.UseNpgsql(_connectionString),
+                    contextLifetime: ServiceLifetime.Singleton,
+                    optionsLifetime: ServiceLifetime.Singleton);
 
             // Désactive HTTPS obligatoire
             services.PostConfigure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(o =>
@@ -64,6 +68,9 @@ public class ApiFactory : WebApplicationFactory<Program>
             // 🔥 Ajout des handlers nécessaires au AuthController
             services.AddScoped<RefreshTokenHandler>();
             services.AddScoped<LogoutUserHandler>();
+
+            services.RemoveAll<IEmailService>();
+            services.AddSingleton<IEmailService, FakeEmailService>();
 
             // MIGRATION AUTO
             var sp = services.BuildServiceProvider();

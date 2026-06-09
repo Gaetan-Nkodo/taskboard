@@ -3,10 +3,13 @@ import App from "./App";
 import LoginPage from "../features/auth/LoginPage";
 import { ProtectedRoute } from "../features/auth/ProtectedRoute";
 import { BoardsPage } from "../features/boards/BoardsPage";
-
+import ForgotPasswordPage from "../features/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../features/auth/ResetPasswordPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
 
   {
     path: "/",
@@ -16,7 +19,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <BoardsPage /> }, // / → boards
+      { index: true, element: <BoardsPage /> },
       { path: "boards", element: <BoardsPage /> },
       { path: "boards/:id", element: <BoardsPage /> }
     ]

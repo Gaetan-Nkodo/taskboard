@@ -19,4 +19,9 @@ public class User
 
     public void Deactivate() => IsActive = false;
     public void Activate() => IsActive = true;
+
+    public void UpdatePassword(string newHash)
+    {
+        PasswordHash = newHash;
+    }
 }

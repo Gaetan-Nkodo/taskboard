@@ -1,3 +1,5 @@
+using MediatR;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,17 +19,20 @@ public class AuthController : ControllerBase
     private readonly ILoginUserHandler _loginHandler;
     private readonly RefreshTokenHandler _refreshHandler;
     private readonly LogoutUserHandler _logoutHandler;
+    private readonly IMediator _mediator;
 
     public AuthController(
         IRegisterUserHandler registerHandler,
         ILoginUserHandler loginHandler,
         RefreshTokenHandler refreshHandler,
-        LogoutUserHandler logoutHandler)
+        LogoutUserHandler logoutHandler,
+        IMediator mediator)
     {
         _registerHandler = registerHandler;
         _loginHandler = loginHandler;
         _refreshHandler = refreshHandler;
         _logoutHandler = logoutHandler;
+        _mediator = mediator;
     }
 
     [HttpPost("register")]
@@ -80,4 +85,26 @@ public class AuthController : ControllerBase
         await _logoutHandler.Handle(userId, ct);
         return Ok(new { message = "Logged out" });
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        await _mediator.Send(request);
+        return Ok(new { message = "If this email exists, a reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        try
+        {
+            await _mediator.Send(request);
+            return Ok(new { message = "Password updated successfully." });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(new { error = "Invalid or expired token" });
+        }
+    }
+
 }

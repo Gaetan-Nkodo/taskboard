@@ -80,6 +80,11 @@ export default function LoginPage() {
         >
           Se connecter
         </button>
+        <div className="text-right">
+          <a href="/forgot-password" className="text-blue-600 text-sm">
+            Mot de passe oublié ?
+          </a>
+        </div>
       </form>
     </div>
   );
