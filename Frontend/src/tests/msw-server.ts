@@ -45,4 +45,23 @@ export const server = setupServer(
 
     return HttpResponse.json({});
   }),
+  
+  // Change password
+  http.post("*/api/v1/auth/change-password", async ({ request }) => {
+    const body = (await request.json()) as {
+      currentPassword: string;
+      newPassword: string;
+    };
+
+    const auth = request.headers.get("authorization");
+    if (!auth || !auth.startsWith("Bearer ")) {
+      return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (body.currentPassword !== "OLD") {
+      return HttpResponse.json({ error: "Bad password" }, { status: 400 });
+    }
+
+    return HttpResponse.json({ ok: true }, { status: 200 });
+  })
 );

@@ -5,6 +5,7 @@ import { ProtectedRoute } from "../features/auth/ProtectedRoute";
 import { BoardsPage } from "../features/boards/BoardsPage";
 import ForgotPasswordPage from "../features/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../features/auth/ResetPasswordPage";
+import { ChangePasswordPage } from "../features/auth/ChangePasswordPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -21,7 +22,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <BoardsPage /> },
       { path: "boards", element: <BoardsPage /> },
-      { path: "boards/:id", element: <BoardsPage /> }
+      { path: "boards/:id", element: <BoardsPage /> },
+      { path: "change-password", element: <ChangePasswordPage /> }
     ]
   }
 ]);

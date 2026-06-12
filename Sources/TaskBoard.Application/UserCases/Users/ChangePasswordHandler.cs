@@ -5,40 +5,36 @@ using TaskBoard.Application.Services;
 using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
 
-public class ResetPasswordHandler : IRequestHandler<ResetPasswordRequest>
+public class ChangePasswordHandler : IRequestHandler<ChangePasswordRequest>
 {
-    private readonly IPasswordResetTokenRepository _tokens;
     private readonly IUserRepository _users;
     private readonly IRefreshTokenRepository _refreshTokens;
     private readonly IPasswordHasher _hasher;
     private readonly IUnitOfWork _uow;
 
-    public ResetPasswordHandler(
-        IPasswordResetTokenRepository tokens,
+    public Guid UserId { get; set; }
+
+    public ChangePasswordHandler(
         IUserRepository users,
         IRefreshTokenRepository refreshTokens,
         IPasswordHasher hasher,
         IUnitOfWork uow)
     {
-        _tokens = tokens;
         _users = users;
         _refreshTokens = refreshTokens;
         _hasher = hasher;
         _uow = uow;
     }
 
-    public async Task Handle(ResetPasswordRequest request, CancellationToken ct)
+    public async Task Handle(ChangePasswordRequest request, CancellationToken ct)
     {
-        var token = await _tokens.GetByTokenAsync(request.Token, ct);
-        if (token is null || !token.IsValid())
-            throw new InvalidCredentialsException();
+        var user = await _users.GetByIdAsync(UserId, ct)
+            ?? throw new UnauthorizedAccessException();
 
-        var user = await _users.GetByIdAsync(token.UserId, ct)
-            ?? throw new InvalidCredentialsException();
+        if (!_hasher.Verify(request.CurrentPassword, user.PasswordHash))
+            throw new DomainException("Mot de passe actuel incorrect.");
 
         await _refreshTokens.RevokeAllForUserAsync(user.Id, ct);
-
-        token.MarkUsed();
 
         user.UpdatePassword(_hasher.Hash(request.NewPassword));
 

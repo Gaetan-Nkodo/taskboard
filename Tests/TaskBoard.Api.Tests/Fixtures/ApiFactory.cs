@@ -11,6 +11,7 @@ using TaskBoard.Application.UseCases.Users;
 using TaskBoard.Domain.Interfaces;
 using TaskBoard.Infrastructure.Persistence;
 using TaskBoard.Infrastructure.Persistence.Repositories;
+using TaskBoard.Infrastructure.Security;
 
 namespace TaskBoard.Api.Tests.Fixtures;
 
@@ -21,6 +22,19 @@ public class ApiFactory : WebApplicationFactory<Program>
     public void SetConnectionString(string connectionString)
     {
         _connectionString = connectionString;
+    }
+
+    public async Task ResetDatabaseAsync()
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"RefreshTokens\" RESTART IDENTITY CASCADE;");
+        await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"PasswordResetTokens\" RESTART IDENTITY CASCADE;");
+        await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Users\" RESTART IDENTITY CASCADE;");
+        await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Boards\" RESTART IDENTITY CASCADE;");
+        await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Columns\" RESTART IDENTITY CASCADE;");
+        await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Tasks\" RESTART IDENTITY CASCADE;");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -45,34 +59,77 @@ public class ApiFactory : WebApplicationFactory<Program>
             if (_connectionString == null)
                 throw new InvalidOperationException("Connection string not set.");
 
-            // Remplace DbContext
+            // DB
             services.RemoveAll<AppDbContext>();
             services.RemoveAll<DbContextOptions>();
             services.RemoveAll<DbContextOptions<AppDbContext>>();
-            services.AddDbContext<AppDbContext>(options =>
-                    options.UseNpgsql(_connectionString),
-                    contextLifetime: ServiceLifetime.Singleton,
-                    optionsLifetime: ServiceLifetime.Singleton);
 
-            // Désactive HTTPS obligatoire
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(_connectionString));
+
+            // HTTPS OFF
             services.PostConfigure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(o =>
             {
                 o.HttpsPort = null;
             });
 
-            // Remplace TokenService par FakeTokenService
+            // 🔥 UTILISER LE VRAI TOKEN SERVICE
             services.RemoveAll<ITokenService>();
-            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-            services.AddScoped<ITokenService, FakeTokenService>();
+            services.AddScoped<ITokenService, JwtTokenService>();
 
-            // 🔥 Ajout des handlers nécessaires au AuthController
-            services.AddScoped<RefreshTokenHandler>();
-            services.AddScoped<LogoutUserHandler>();
+            // PASSWORD HASHER FAKE
+            services.RemoveAll<IPasswordHasher>();
+            services.AddSingleton<IPasswordHasher, FakePasswordHasher>();
 
+            // EMAIL SERVICE FAKE
             services.RemoveAll<IEmailService>();
             services.AddSingleton<IEmailService, FakeEmailService>();
 
-            // MIGRATION AUTO
+            // REPOSITORIES
+            services.RemoveAll<IUserRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+
+            services.RemoveAll<IRefreshTokenRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+            services.RemoveAll<IPasswordResetTokenRepository>();
+            services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+
+            // 🔥 UNIT OF WORK
+            services.RemoveAll<IUnitOfWork>();
+            services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+            // HANDLERS
+            services.RemoveAll<IRegisterUserHandler>();
+            services.AddScoped<IRegisterUserHandler, RegisterUserHandler>();
+
+            services.RemoveAll<ILoginUserHandler>();
+            services.AddScoped<ILoginUserHandler>(sp =>
+                new LoginUserHandler(
+                    sp.GetRequiredService<IUserRepository>(),
+                    sp.GetRequiredService<IPasswordHasher>(),
+                    sp.GetRequiredService<ITokenService>(),
+                    sp.GetRequiredService<IRefreshTokenRepository>(),
+                    sp.GetRequiredService<IUnitOfWork>()
+                )
+            );
+
+            services.RemoveAll<RefreshTokenHandler>();
+            services.AddScoped<RefreshTokenHandler>();
+
+            services.RemoveAll<LogoutUserHandler>();
+            services.AddScoped<LogoutUserHandler>();
+
+            services.RemoveAll<ForgotPasswordHandler>();
+            services.AddScoped<ForgotPasswordHandler>();
+
+            services.RemoveAll<ResetPasswordHandler>();
+            services.AddScoped<ResetPasswordHandler>();
+
+            services.RemoveAll<ChangePasswordHandler>();
+            services.AddScoped<ChangePasswordHandler>();
+
+            // MIGRATIONS
             var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

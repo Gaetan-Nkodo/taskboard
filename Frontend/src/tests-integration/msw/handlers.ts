@@ -1,7 +1,6 @@
 import { http, HttpResponse } from "msw";
 
-const API_URL = "http://localhost";
-
+// Types
 type RegisterBody = {
   email: string;
   password: string;
@@ -15,7 +14,7 @@ type LoginBody = {
 
 export const handlers = [
   // --- Auth: Register ---
-  http.post(`${API_URL}/api/v1/auth/register`, async ({ request }) => {
+  http.post("/api/v1/auth/register", async ({ request }) => {
     const body = (await request.json()) as RegisterBody;
 
     return HttpResponse.json({
@@ -26,7 +25,7 @@ export const handlers = [
   }),
 
   // --- Auth: Login ---
-  http.post(`${API_URL}/api/v1/auth/login`, async ({ request }) => {
+  http.post("/api/v1/auth/login", async ({ request }) => {
     const body = (await request.json()) as LoginBody;
 
     return HttpResponse.json({
@@ -40,8 +39,50 @@ export const handlers = [
     });
   }),
 
+  // --- Auth: Refresh ---
+  http.post("/api/v1/auth/refresh", async () => {
+    return HttpResponse.json({
+      accessToken: "new-token",
+      refreshToken: "new-refresh",
+      user: {
+        id: "fake-id",
+        email: "test@test.com",
+        fullName: "Test User"
+      }
+    });
+  }),
+
+  // --- Auth: Forgot Password ---
+  http.post("/api/v1/auth/forgot-password", async () => {
+    return HttpResponse.json({ ok: true });
+  }),
+
+  // --- Auth: Reset Password ---
+  http.post("/api/v1/auth/reset-password", async () => {
+    return HttpResponse.json({ ok: true });
+  }),
+
+  // --- Auth: Change Password ---
+  http.post("/api/v1/auth/change-password", async ({ request }) => {
+    const body = (await request.json()) as {
+      currentPassword: string;
+      newPassword: string;
+    };
+
+    const auth = request.headers.get("authorization");
+    if (!auth || !auth.startsWith("Bearer ")) {
+      return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (body.currentPassword !== "OLD") {
+      return HttpResponse.json({ error: "Bad password" }, { status: 400 });
+    }
+
+    return HttpResponse.json({ ok: true }, { status: 200 });
+  }),
+
   // --- Boards ---
-  http.get(`${API_URL}/api/v1/boards`, () => {
+  http.get("/api/v1/boards", () => {
     return HttpResponse.json([
       { id: "b1", name: "Board A", description: "Desc A" },
       { id: "b2", name: "Board B", description: "Desc B" }
@@ -49,7 +90,7 @@ export const handlers = [
   }),
 
   // --- Tasks ---
-  http.get(`${API_URL}/api/v1/tasks`, () => {
+  http.get("/api/v1/tasks", () => {
     return HttpResponse.json([
       { id: "t1", title: "Task 1", boardId: "b1", columnId: "c1" },
       { id: "t2", title: "Task 2", boardId: "b1", columnId: "c1" }
@@ -57,7 +98,7 @@ export const handlers = [
   }),
 
   // --- Health ---
-  http.get(`${API_URL}/health`, () => {
+  http.get("/health", () => {
     return HttpResponse.json({ status: "ok" });
   })
 ];

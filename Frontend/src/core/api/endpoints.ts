@@ -7,6 +7,7 @@ export const API = {
   register: "/api/v1/auth/register",
   refresh: "/api/v1/auth/refresh",
   logout: "/api/v1/auth/logout",
+  changePassword: "/api/v1/auth/change-password",
 
   // --- Boards ---
   boards: "/api/v1/boards",

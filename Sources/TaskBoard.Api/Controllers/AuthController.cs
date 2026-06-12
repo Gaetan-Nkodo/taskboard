@@ -71,9 +71,13 @@ public class AuthController : ControllerBase
             var result = await _refreshHandler.Handle(request);
             return Ok(result);
         }
-        catch
+        catch (InvalidCredentialsException)
         {
             return Unauthorized(new { error = "Invalid refresh token" });
+        }
+        catch (AccountDisabledException)
+        {
+            return Unauthorized(new { error = "Account disabled" });
         }
     }
 
@@ -101,10 +105,31 @@ public class AuthController : ControllerBase
             await _mediator.Send(request);
             return Ok(new { message = "Password updated successfully." });
         }
-        catch (UnauthorizedAccessException)
+        catch (InvalidCredentialsException)
         {
             return Unauthorized(new { error = "Invalid or expired token" });
         }
     }
 
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var handler = HttpContext.RequestServices.GetRequiredService<ChangePasswordHandler>();
+        handler.UserId = User.GetUserId();
+
+        try
+        {
+            await handler.Handle(request, HttpContext.RequestAborted);
+            return Ok(new { message = "Password updated" });
+        }
+        catch (InvalidCredentialsException)
+        {
+            return Unauthorized(new { error = "Invalid password" });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

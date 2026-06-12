@@ -22,10 +22,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
-
         // Security
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IEmailService, ConsoleEmailService>();
 
         // Handlers
         services.AddScoped<IRegisterUserHandler, RegisterUserHandler>();
@@ -42,11 +43,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<DeleteTaskHandler>();
         services.AddScoped<ForgotPasswordHandler>();
         services.AddScoped<ResetPasswordHandler>();
+        services.AddScoped<ChangePasswordHandler>();
 
-        // Validators (un seul appel suffit)
+        // Validators
         services.AddValidatorsFromAssembly(typeof(CreateBoardRequestValidator).Assembly);
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ForgotPasswordRequest).Assembly));
 
+        // MediatR
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ForgotPasswordRequest).Assembly));
 
         return services;
     }

@@ -20,6 +20,7 @@ builder.Logging.AddConsole();
 builder.AddCustomConfiguration();
 builder.Host.AddCustomSerilog();
 
+// Services
 builder.Services.AddCustomServices();
 builder.Services.AddCustomSwagger();
 builder.Services.AddControllers();
@@ -36,10 +37,16 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
-// 🔥 AUTH
+// 🔥 ROUTING AVANT LES MIDDLEWARES
 app.UseRouting();
+
+// Middlewares custom
 app.UseCustomMiddlewares();
+
+// CORS
 app.UseCustomCors();
+
+// Auth
 app.UseAuthentication();
 app.UseAuthorization();
 

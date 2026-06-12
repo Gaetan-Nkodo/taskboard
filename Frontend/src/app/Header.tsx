@@ -1,5 +1,5 @@
 import { useAuthContext } from "../features/auth/AuthProvider";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Header() {
   const { user, logout } = useAuthContext();
@@ -20,16 +20,39 @@ export default function Header() {
         marginBottom: "5px",
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center"
+        alignItems: "center",
+        borderBottom: "1px solid #ddd"
       }}
     >
-      <strong>TaskBoard</strong>
+      <strong style={{ fontSize: "18px" }}>TaskBoard</strong>
 
-      <div>
-        <span style={{ marginRight: "15px" }}>
-          Bonjour {user.displayName}
-        </span>
-        <button onClick={handleLogout}>Se déconnecter</button>
+      <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+        <span>Bonjour {user.displayName}</span>
+
+        <Link
+          to="/change-password"
+          style={{
+            color: "#0070f3",
+            textDecoration: "none",
+            fontWeight: "500"
+          }}
+        >
+          Changer mot de passe
+        </Link>
+
+        <button
+          onClick={handleLogout}
+          style={{
+            background: "#e63946",
+            color: "white",
+            border: "none",
+            padding: "6px 12px",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Se déconnecter
+        </button>
       </div>
     </header>
   );

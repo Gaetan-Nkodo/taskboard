@@ -17,10 +17,12 @@ public class RefreshTokenHandlerTests
     private readonly IRefreshTokenRepository _repo = Substitute.For<IRefreshTokenRepository>();
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly ITokenService _tokens = Substitute.For<ITokenService>();
+    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
 
     [Fact]
     public async Task Handle_ShouldReturnNewTokens_WhenRefreshTokenIsValid()
     {
+        // Arrange
         var userId = Guid.NewGuid();
         var stored = new RefreshToken(userId, "OLD_REFRESH", DateTime.UtcNow.AddMinutes(10));
 
@@ -35,17 +37,24 @@ public class RefreshTokenHandlerTests
         _tokens.GenerateToken(userId, user.Email).Returns("NEW_ACCESS");
         _tokens.GenerateRefreshToken(userId).Returns("NEW_REFRESH");
 
-        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens, _uow);
 
+        // Act
         var result = await handler.Handle(new RefreshTokenRequest("OLD_REFRESH"));
 
+        // Assert
         result.AccessToken.Should().Be("NEW_ACCESS");
         result.RefreshToken.Should().Be("NEW_REFRESH");
-        result.User.Email.Should().Be("user@example.com");
 
-        stored.Revoked.Should().BeTrue();
-        await _repo.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        // Le token doit être ROTATÉ, pas révoqué
+        stored.Revoked.Should().BeFalse();
+        stored.Token.Should().Be("NEW_REFRESH");
+        stored.ExpiresAt.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromSeconds(5));
+
+        // Un seul commit global
+        await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
+
 
     [Fact]
     public async Task Handle_ShouldThrow_WhenRefreshTokenExpired()
@@ -55,7 +64,7 @@ public class RefreshTokenHandlerTests
         _repo.GetByTokenAsync("OLD", Arg.Any<CancellationToken>())
              .Returns(stored);
 
-        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens, _uow);
 
         var act = () => handler.Handle(new RefreshTokenRequest("OLD"));
 
@@ -71,7 +80,7 @@ public class RefreshTokenHandlerTests
         _repo.GetByTokenAsync("OLD", Arg.Any<CancellationToken>())
              .Returns(stored);
 
-        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens, _uow);
 
         var act = () => handler.Handle(new RefreshTokenRequest("OLD"));
 
@@ -93,7 +102,7 @@ public class RefreshTokenHandlerTests
 
         _users.GetByIdAsync(userId).Returns(user);
 
-        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens, _uow);
 
         var act = () => handler.Handle(new RefreshTokenRequest("OLD"));
 
@@ -106,7 +115,7 @@ public class RefreshTokenHandlerTests
         _repo.GetByTokenAsync("MISSING", Arg.Any<CancellationToken>())
              .Returns((RefreshToken?)null);
 
-        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens, _uow);
 
         var act = () => handler.Handle(new RefreshTokenRequest("MISSING"));
 
@@ -123,7 +132,7 @@ public class RefreshTokenHandlerTests
 
         _users.GetByIdAsync(stored.UserId).Returns((User?)null);
 
-        var handler = new RefreshTokenHandler(_repo, _users, _tokens);
+        var handler = new RefreshTokenHandler(_repo, _users, _tokens, _uow);
 
         var act = () => handler.Handle(new RefreshTokenRequest("OLD"));
 

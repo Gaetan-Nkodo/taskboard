@@ -52,10 +52,30 @@ export function useAuthService() {
     window.location.href = "/login";
   }
 
+  async function changePassword(currentPassword: string, newPassword: string) {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+
+    const response = await fetch(API.changePassword, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken
+      },
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+
+    if (response.status === 401) {
+      logout("Votre session a expiré.");
+      return null;
+    }
+    return response;
+  }
+
   return {
     login,
     refresh,
     logout,
+    changePassword,
     getUser: () => JSON.parse(localStorage.getItem(USER_KEY) || "null"),
     getAccessToken: () => localStorage.getItem(ACCESS_TOKEN_KEY),
     getRefreshToken: () => localStorage.getItem(REFRESH_TOKEN_KEY)

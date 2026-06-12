@@ -15,7 +15,7 @@ using TaskBoard.Domain.Entities;
 namespace TaskBoard.Api.Tests.Integration;
 
 [Collection("Api collection")]
-public class AuthTests
+public class AuthTests : IAsyncLifetime
 {
     private readonly HttpClient _client;
     private readonly ApiFactory _factory;
@@ -25,6 +25,11 @@ public class AuthTests
         _factory = factory;
         factory.SetConnectionString(fixture.ConnectionString);
         _client = factory.CreateClient();
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _factory.ResetDatabaseAsync();
     }
 
     private async Task<(string AccessToken, string RefreshToken)> RegisterAndLoginAsync()
@@ -356,14 +361,106 @@ public class AuthTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var updated = await db.Users.FindAsync(user.Id);
+        // 🔥 Forcer le rechargement depuis la DB
+        await db.Entry(user).ReloadAsync();
+        await db.Entry(token).ReloadAsync();
+        await db.Entry(refresh).ReloadAsync();
+
+        var updated = user;
         updated!.PasswordHash.Should().NotBe("oldhash");
 
-        var updatedToken = await db.PasswordResetTokens.FindAsync(token.Id);
+        var updatedToken = token;
         updatedToken!.Used.Should().BeTrue();
 
-        var revoked = await db.RefreshTokens.FindAsync(refresh.Id);
+        var revoked = refresh;
         revoked!.Revoked.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task ChangePassword_ShouldUpdatePassword_AndRevokeRefreshTokens()
+    {
+        using var scope = new ApiScope(_factory);
+        var db = scope.Db;
+
+        // Arrange : créer un user
+        var email = $"user{Guid.NewGuid()}@example.com";
+        var register = new RegisterUserRequest(email, "OLD", "Test User");
+        await _client.PostAsJsonAsync("/api/v1/auth/register", register);
+
+        // Login
+        var login = new LoginUserRequest(email, "OLD");
+        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login", login);
+        var tokens = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
+
+        // Ajouter un refresh token en DB
+        var user = db.Users.First(u => u.Email == email);
+        var refresh = new RefreshToken(user.Id, "REFRESH1", DateTime.UtcNow.AddDays(1));
+        db.RefreshTokens.Add(refresh);
+        await db.SaveChangesAsync();
+
+        // Authentifier le client
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", tokens!.AccessToken);
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/change-password", new
+        {
+            currentPassword = "OLD",
+            newPassword = "NEW"
+        });
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // 🔥 Recharger les entités depuis la DB
+        await db.Entry(user).ReloadAsync();
+        await db.Entry(refresh).ReloadAsync();
+
+        var updated = user;
+        updated!.PasswordHash.Should().Be("NEW");
+
+        var revoked = refresh;
+        revoked!.Revoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ChangePassword_ShouldFail_WhenCurrentPasswordIncorrect()
+    {
+        using var scope = new ApiScope(_factory);
+        var db = scope.Db;
+
+        var email = $"user{Guid.NewGuid()}@example.com";
+        await _client.PostAsJsonAsync("/api/v1/auth/register",
+            new RegisterUserRequest(email, "OLD", "Test User"));
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login",
+            new LoginUserRequest(email, "OLD"));
+
+        var tokens = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", tokens!.AccessToken);
+
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/change-password", new
+        {
+            currentPassword = "BAD",
+            newPassword = "NEW"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ChangePassword_ShouldFail_WhenUserNotAuthenticated()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/change-password", new
+        {
+            currentPassword = "ANY",
+            newPassword = "NEW"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 }

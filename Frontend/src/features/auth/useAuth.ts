@@ -34,7 +34,7 @@ export const useAuth = () => {
 
   const getUser = () => {
     const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
+    return raw ? JSON.parse(raw) : null;  
   };
 
   const getToken = () => localStorage.getItem("token");

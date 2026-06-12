@@ -1,22 +1,14 @@
-namespace TaskBoard.Domain.Entities;
-
 public class RefreshToken
 {
-    public Guid Id { get; private set; } = Guid.NewGuid();
-
+    public Guid Id { get; private set; }
     public Guid UserId { get; private set; }
-
-    public string Token { get; private set; } = default!;
-
+    public string Token { get; private set; }
     public DateTime ExpiresAt { get; private set; }
-
-    // 🔥 Doit s’appeler Revoked pour correspondre à AppDbContext
     public bool Revoked { get; private set; }
-
-    private RefreshToken() { }
 
     public RefreshToken(Guid userId, string token, DateTime expiresAt)
     {
+        Id = Guid.NewGuid();
         UserId = userId;
         Token = token;
         ExpiresAt = expiresAt;
@@ -26,6 +18,13 @@ public class RefreshToken
     public void Revoke()
     {
         Revoked = true;
+    }
+
+    public void Rotate(string newToken, DateTime newExpiresAt)
+    {
+        Token = newToken;
+        ExpiresAt = newExpiresAt;
+        Revoked = false;
     }
 
     public bool IsExpired => DateTime.UtcNow >= ExpiresAt;

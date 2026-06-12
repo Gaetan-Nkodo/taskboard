@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 using TaskBoard.Application.Services;
-using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Interfaces;
 
 namespace TaskBoard.Infrastructure.Security;
@@ -14,12 +13,10 @@ namespace TaskBoard.Infrastructure.Security;
 public sealed class JwtTokenService : ITokenService
 {
     private readonly IConfiguration _config;
-    private readonly IRefreshTokenRepository _refreshTokens;
 
-    public JwtTokenService(IConfiguration config, IRefreshTokenRepository refreshTokens)
+    public JwtTokenService(IConfiguration config)
     {
         _config = config;
-        _refreshTokens = refreshTokens;
     }
 
     public string GenerateToken(Guid userId, string email)
@@ -36,7 +33,7 @@ public sealed class JwtTokenService : ITokenService
 
         var claims = new[]
         {
-            new Claim("sub", userId.ToString()),               // 🔥 obligatoire
+            new Claim("sub", userId.ToString()),
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email)
         };
@@ -52,20 +49,13 @@ public sealed class JwtTokenService : ITokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public async Task<string> GenerateRefreshToken(Guid userId)
+    public Task<string> GenerateRefreshToken(Guid userId)
     {
+        // 🔥 IMPORTANT :
+        // On NE STOCKE PLUS le refresh token ici.
+        // RefreshTokenHandler gère la rotation et le stockage.
         var token = Guid.NewGuid().ToString("N");
-
-        var refresh = new RefreshToken(
-            userId,
-            token,
-            DateTime.UtcNow.AddDays(7)
-        );
-
-        await _refreshTokens.StoreAsync(refresh);
-        await _refreshTokens.SaveChangesAsync(CancellationToken.None);
-
-        return token;
+        return Task.FromResult(token);
     }
 
     public Task<(Guid UserId, string Email)> ValidateAccessTokenAsync(string token)
