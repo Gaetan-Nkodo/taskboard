@@ -2,6 +2,10 @@
 # 1) BASE RUNTIME (Alpine .NET 8)
 # -----------------------------
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
+
+# Sécurité : mise à jour des libs Alpine (corrige libcrypto3/libssl3)
+RUN apk update && apk upgrade
+
 WORKDIR /app
 EXPOSE 8080
 
@@ -36,5 +40,7 @@ RUN dotnet publish TaskBoard.Api.csproj -c $BUILD_CONFIGURATION -o /app/publish 
 # -----------------------------
 FROM base AS final
 WORKDIR /app
+
 COPY --from=publish /app/publish .
+
 ENTRYPOINT ["dotnet", "TaskBoard.Api.dll"]
