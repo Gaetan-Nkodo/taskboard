@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { ChangePasswordPage } from "../ChangePasswordPage";
-import { TestProviders } from "../../../tests/test-utils";
+import { TestProviders } from "@/tests/test-utils";
 
 beforeEach(() => {
   localStorage.setItem("token", "FAKE_TOKEN");
@@ -16,9 +17,11 @@ beforeEach(() => {
 
 test("affiche un toast de succès quand le mot de passe est correct", async () => {
   render(
-    <TestProviders>
-      <ChangePasswordPage />
-    </TestProviders>
+    <MemoryRouter>
+      <TestProviders>
+        <ChangePasswordPage />
+      </TestProviders>
+    </MemoryRouter>
   );
 
   fireEvent.change(screen.getByPlaceholderText(/mot de passe actuel/i), {

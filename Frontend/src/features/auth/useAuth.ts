@@ -1,7 +1,9 @@
-import { env } from "../../core/config/env";
-import type { LoginRequest, LoginResponse } from "../../core/models/Auth";
+import { env } from "@/core/config/env";
+import type { LoginRequest, LoginResponse } from "@/core/models/Auth";
+import { useNavigate } from "react-router-dom";
 
 export const useAuth = () => {
+  const navigate = useNavigate();
   const login = async (data: LoginRequest) => {
     const response = await fetch(`${env.apiUrl}/api/v1/auth/login`, {
       method: "POST",
@@ -30,6 +32,7 @@ export const useAuth = () => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    navigate("/login");
   };
 
   const getUser = () => {

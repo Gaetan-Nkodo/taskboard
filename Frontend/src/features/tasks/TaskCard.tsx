@@ -1,4 +1,4 @@
-import type { Task } from "../../core/models/Task";
+import type { Task } from "@/core/models/Task";
 
 export default function TaskCard({ task }: { task: Task }) {
   return (

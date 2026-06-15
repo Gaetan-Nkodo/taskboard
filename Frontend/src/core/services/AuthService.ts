@@ -41,15 +41,20 @@ export function useAuthService() {
 
       return result;
     } catch {
-      logout();
+      logout("expired");
       return null;
     }
   }
 
-  function logout(reason?: string) {
+  function logout(reason?: string, redirect?: () => void) {
     localStorage.clear();
     if (reason) localStorage.setItem("logoutReason", reason);
-    window.location.href = "/login";
+
+    if (redirect) {
+      redirect(); // 🔥 testable
+    } else {
+      window.location.href = "/login"; // 🔥 prod
+    }
   }
 
   async function changePassword(currentPassword: string, newPassword: string) {

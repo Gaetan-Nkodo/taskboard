@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
+
+import { Card, Input, Button } from "@/components/ui";
 
 export default function ResetPasswordPage() {
   const [params] = useSearchParams();
@@ -28,34 +30,50 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="max-w-sm mx-auto mt-20 p-6 bg-white shadow rounded">
-      <h1 className="text-xl font-bold mb-4">Réinitialiser le mot de passe</h1>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-sm p-6 animate-fadeIn">
+        <h1 className="text-xl font-bold mb-4">Réinitialiser le mot de passe</h1>
 
-      {done ? (
-        <div className="text-green-600">
-          Mot de passe mis à jour. Vous pouvez maintenant vous connecter.
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {error && <div className="text-red-600">{error}</div>}
+        {done ? (
+          <div className="space-y-4">
+            <div className="text-green-600">
+              Mot de passe mis à jour. Vous pouvez maintenant vous connecter.
+            </div>
 
-          <input
-            type="password"
-            placeholder="Nouveau mot de passe"
-            className="w-full border p-2 rounded"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
+            <Link
+              to="/login"
+              className="block text-center text-sm text-primary hover:underline"
+            >
+              Retour à la connexion
+            </Link>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="text-red-600 text-sm">{error}</div>
+            )}
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded"
-          >
-            Mettre à jour
-          </button>
-        </form>
-      )}
+            <Input
+              type="password"
+              placeholder="Nouveau mot de passe"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+
+            <Button type="submit" className="w-full">
+              Mettre à jour
+            </Button>
+
+            <Link
+              to="/login"
+              className="block text-center text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              Retour à la connexion
+            </Link>
+          </form>
+        )}
+      </Card>
     </div>
   );
 }

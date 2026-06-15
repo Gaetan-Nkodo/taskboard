@@ -1,8 +1,8 @@
-import { useAuthContext } from "../../features/auth/AuthProvider";
+import { useAuthContext } from "@/features/auth/AuthProvider";
 import { useAuthService } from "../services/AuthService";
 
 export function useHttp() {
-  const { applyTokens, logout } = useAuthContext();
+  const { accessToken, applyTokens, logout: contextLogout } = useAuthContext();
   const auth = useAuthService();
 
   return async function http<T>(
@@ -10,7 +10,7 @@ export function useHttp() {
     options: RequestInit = {},
     retry = true
   ): Promise<T> {
-    const token = auth.getAccessToken();
+    const token = accessToken ?? auth.getAccessToken();
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -20,6 +20,9 @@ export function useHttp() {
 
     const response = await fetch(url, { ...options, headers });
 
+    // -----------------------------
+    // 🔥 401 → tentative de refresh
+    // -----------------------------
     if (response.status === 401 && retry) {
       const refreshed = await auth.refresh();
 
@@ -27,12 +30,16 @@ export function useHttp() {
         applyTokens(refreshed);
         return http<T>(url, options, false);
       }
-      
+
+      // ❗ IMPORTANT : un seul logout → AuthService
       auth.logout("expired");
-      logout();
+
       throw new Error("Session expired");
     }
 
+    // -----------------------------
+    // 🔥 autres erreurs HTTP
+    // -----------------------------
     if (!response.ok) {
       throw new Error(await response.text());
     }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useBoardService } from "../../core/services/BoardService";
-import { useAuthContext } from "../auth/AuthProvider";
-import type { Board } from "../../core/models/Board";
+import { useBoardService } from "@/core/services/BoardService";
+import { useAuthContext } from "@/features/auth/AuthProvider";
+import type { Board } from "@/core/models/Board";
 import { Link } from "react-router-dom";
 
 export function BoardsPage() {

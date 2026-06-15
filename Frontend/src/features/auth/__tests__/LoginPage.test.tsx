@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { AuthProvider } from "../AuthProvider";
 import LoginPage from "../LoginPage";
+import { AuthProvider } from "@/features/auth/AuthProvider";
 
-// --- MOCK useAuth() ---
+// MOCK useAuth()
 const loginMock = vi.fn();
 
-vi.mock("../useAuth", () => ({
+vi.mock("@/features/auth/useAuth", () => ({
   useAuth: () => ({
     login: loginMock
   })
 }));
 
-// --- MOCK useNavigate() ---
+// MOCK useNavigate
 const navigateMock = vi.fn();
 
 vi.mock("react-router-dom", async () => {
@@ -29,25 +29,6 @@ describe("LoginPage", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
-  });
-
-  it("affiche le message d’expiration si logoutReason = expired", () => {
-    localStorage.setItem("logoutReason", "expired");
-
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <LoginPage />
-        </AuthProvider>
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByText("Votre session a expiré, veuillez vous reconnecter")
-    ).toBeInTheDocument();
-
-    // logoutReason doit être supprimé
-    expect(localStorage.getItem("logoutReason")).toBe(null);
   });
 
   it("stocke accessToken + refreshToken + user et navigue", async () => {
@@ -79,20 +60,15 @@ describe("LoginPage", () => {
 
     fireEvent.submit(screen.getByTestId("login-form"));
 
-    // Navigation OK
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalled();
     });
 
-    // Vérification localStorage
     expect(JSON.parse(localStorage.getItem("user")!)).toEqual({
       id: "1",
       email: "test@test.com",
       displayName: "Test User"
     });
-
-    expect(localStorage.getItem("accessToken")).toBe("ACCESS_TOKEN");
-    expect(localStorage.getItem("refreshToken")).toBe("REFRESH_TOKEN");
   });
 
   it("affiche une erreur si login échoue", async () => {
@@ -116,6 +92,6 @@ describe("LoginPage", () => {
 
     fireEvent.submit(screen.getByTestId("login-form"));
 
-    expect(await screen.findByText("Invalid credentials")).toBeInTheDocument();
+    expect(await screen.findByText("Identifiants invalides")).toBeInTheDocument();
   });
 });

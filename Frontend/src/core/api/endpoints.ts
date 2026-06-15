@@ -15,5 +15,8 @@ export const API = {
 
   // --- Tasks ---
   tasks: "/api/v1/tasks",
-  task: (id: string) => `/api/v1/tasks/${id}`
+  task: (id: string) => `/api/v1/tasks/${id}`,
+
+  // --- Password Reset ---
+  resetPassword: "/api/v1/auth/reset-password"
 } as const;

@@ -1,9 +1,9 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuthContext } from "../AuthProvider";
 
-const wrapper = ({ children }: any) => (
-  <AuthProvider>{children}</AuthProvider>
-);
+function wrapper({ children }: { children: React.ReactNode }) {
+  return <AuthProvider>{children}</AuthProvider>;
+}
 
 describe("AuthProvider", () => {
   beforeEach(() => {
@@ -13,10 +13,12 @@ describe("AuthProvider", () => {
   it("applyTokens met à jour le contexte ET le localStorage", async () => {
     const { result } = renderHook(() => useAuthContext(), { wrapper });
 
-    result.current.applyTokens({
-      accessToken: "newAccess",
-      refreshToken: "newRefresh",
-      user: { id: "2", email: "new@test.com", displayName: "New User" }
+    act(() => {
+      result.current.applyTokens({
+        accessToken: "newAccess",
+        refreshToken: "newRefresh",
+        user: { id: "2", email: "new@test.com", displayName: "New User" }
+      });
     });
 
     await waitFor(() => {
@@ -25,7 +27,6 @@ describe("AuthProvider", () => {
       expect(result.current.user?.email).toBe("new@test.com");
     });
 
-    // Vérifie localStorage
     expect(localStorage.getItem("accessToken")).toBe("newAccess");
     expect(localStorage.getItem("refreshToken")).toBe("newRefresh");
     expect(JSON.parse(localStorage.getItem("user")!)).toEqual({
@@ -42,7 +43,9 @@ describe("AuthProvider", () => {
 
     const { result } = renderHook(() => useAuthContext(), { wrapper });
 
-    result.current.logout();
+    act(() => {
+      result.current.logout();
+    });
 
     await waitFor(() => {
       expect(result.current.user).toBe(null);

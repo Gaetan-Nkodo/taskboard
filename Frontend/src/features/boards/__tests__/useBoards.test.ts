@@ -1,10 +1,11 @@
 import { renderHook } from "@testing-library/react";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import { useBoards } from "../useBoards";
 
-// On mocke useApiClient, pas BoardService
+// Mock correct de useApiClient
 const mockGet = vi.fn();
 
-vi.mock("../../../core/api/apiClient", () => ({
+vi.mock("@/core/api/apiClient", () => ({
   useApiClient: () => ({
     get: mockGet
   })

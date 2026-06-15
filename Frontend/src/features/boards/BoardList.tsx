@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Board } from "../../core/models/Board";
+import type { Board } from "@/core/models/Board";
 import { useBoards } from "./useBoards";
 import BoardCard from "./BoardCard";
 

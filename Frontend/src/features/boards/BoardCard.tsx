@@ -1,4 +1,4 @@
-import type { Board } from "../../core/models/Board";
+import type { Board } from "@/core/models/Board";
 import { Link } from "react-router-dom";
 
 export default function BoardCard({ board }: { board: Board }) {

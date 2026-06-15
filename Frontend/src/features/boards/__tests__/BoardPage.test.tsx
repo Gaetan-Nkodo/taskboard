@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { AuthProvider } from "../../auth/AuthProvider";
+import { AuthProvider } from "@/features/auth/AuthProvider";
 import { BoardsPage } from "../BoardsPage";
 
 // 1. Mock du service
 const mockGetAll = vi.fn();
 
-vi.mock("../../../core/services/BoardService", () => ({
+vi.mock("@/@/core/services/BoardService", () => ({
   useBoardService: () => ({
     getAll: mockGetAll
   })

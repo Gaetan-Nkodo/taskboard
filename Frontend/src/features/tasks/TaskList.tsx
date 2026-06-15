@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Task } from "../../core/models/Task";
+import type { Task } from "@/core/models/Task";
 import { useTasks } from "./useTasks";
 import TaskCard from "./TaskCard";
 

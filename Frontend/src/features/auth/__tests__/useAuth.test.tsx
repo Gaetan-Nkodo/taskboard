@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { useAuth } from "../useAuth";
+
+function wrapper({ children }: { children: React.ReactNode }) {
+  return <MemoryRouter>{children}</MemoryRouter>;
+}
 
 describe("useAuth", () => {
   beforeEach(() => {
@@ -8,7 +14,6 @@ describe("useAuth", () => {
   });
 
   it("login stocke token et user", async () => {
-    // Mock du fetch
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -18,12 +23,14 @@ describe("useAuth", () => {
       })
     } as any);
 
-    const { login, getUser } = useAuth();
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
-    await login({ email: "test@test.com", password: "123" });
+    await act(async () => {
+      await result.current.login({ email: "test@test.com", password: "123" });
+    });
 
-    const user = getUser();
-    expect(user.email).toBe("test@test.com");
+    const user = result.current.getUser();
+    expect(user?.email).toBe("test@test.com");
     expect(localStorage.getItem("token")).toBe("abc");
   });
 
@@ -31,11 +38,14 @@ describe("useAuth", () => {
     localStorage.setItem("token", "abc");
     localStorage.setItem("user", JSON.stringify({ id: "1" }));
 
-    const { logout, getUser } = useAuth();
-    logout();
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    act(() => {
+      result.current.logout();
+    });
 
     expect(localStorage.getItem("token")).toBeNull();
-    expect(getUser()).toBeNull();
+    expect(result.current.getUser()).toBeNull();
   });
 
   it("login renvoie une erreur si backend renvoie une erreur", async () => {
@@ -44,10 +54,10 @@ describe("useAuth", () => {
       text: async () => "Invalid credentials"
     } as any);
 
-    const { login } = useAuth();
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     await expect(
-      login({ email: "bad", password: "wrong" })
+      result.current.login({ email: "bad", password: "wrong" })
     ).rejects.toThrow("Invalid credentials");
   });
 });

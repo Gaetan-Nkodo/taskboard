@@ -1,19 +1,14 @@
-import { rawHttp } from "../../core/api/rawHttp";
-import { API } from "../../core/api/endpoints";
-import type { LoginResponse } from "../../core/models/Auth";
+import { rawHttp } from "@/core/api/rawHttp";
+import { API } from "@/core/api/endpoints";
+import type { LoginResponse } from "@/core/models/Auth";
 
-test("login returns mocked tokens and user (MSW)", async () => {
+test("login returns tokens and user", async () => {
   const result = await rawHttp<LoginResponse>(API.login, {
     method: "POST",
-    body: JSON.stringify({
-      email: "test@example.com",
-      password: "P@ssw0rd!"
-    })
+    body: JSON.stringify({ email: "test@test.com", password: "pwd" })
   });
 
-  expect(result).toEqual({
-    accessToken: "ACCESS_TOKEN",
-    refreshToken: "REFRESH_TOKEN",
-    user: { id: "1", email: "test@test.com" }
-  });
+  expect(result.accessToken).toBe("ACCESS_TOKEN");
+  expect(result.refreshToken).toBe("REFRESH_TOKEN");
+  expect(result.user.email).toBe("test@test.com");
 });

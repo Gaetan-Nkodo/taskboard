@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RouterProvider } from "react-router-dom";
-import { router } from "../../app/routes";
-import { TestProviders } from "../../tests/test-utils";
+import { router } from "@/app/routes";
+import { AppProviders } from "@/tests/test-utils";
 
 beforeEach(() => {
   localStorage.setItem("token", "FAKE_TOKEN");
@@ -19,14 +19,12 @@ test("navigation → ProtectedRoute → ChangePasswordPage → succès", async (
   router.navigate("/change-password");
 
   render(
-    <TestProviders>
+    <AppProviders>
       <RouterProvider router={router} />
-    </TestProviders>
+    </AppProviders>
   );
 
-  expect(
-    await screen.findByText(/changer le mot de passe/i)
-  ).toBeInTheDocument();
+  expect(await screen.findByText(/changer le mot de passe/i)).toBeInTheDocument();
 
   fireEvent.change(screen.getByPlaceholderText(/mot de passe actuel/i), {
     target: { value: "OLD" }
@@ -42,7 +40,5 @@ test("navigation → ProtectedRoute → ChangePasswordPage → succès", async (
 
   fireEvent.click(screen.getByText(/mettre à jour/i));
 
-  expect(
-    await screen.findByText(/mot de passe mis à jour/i)
-  ).toBeInTheDocument();
+  expect(await screen.findByText(/mot de passe mis à jour/i)).toBeInTheDocument();
 });

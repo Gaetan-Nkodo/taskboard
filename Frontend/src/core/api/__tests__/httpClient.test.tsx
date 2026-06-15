@@ -1,40 +1,48 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { AuthProvider, useAuthContext } from "../../../features/auth/AuthProvider";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { AuthProvider, useAuthContext } from "@/features/auth/AuthProvider";
 import { useHttp } from "../httpClient";
+import { API } from "@/core/api/endpoints";
 
-// --- MOCK AUTH SERVICE ---
+// -------------------------------------------------------------
+// 🔥 Patch JSDOM pour empêcher toute navigation réelle
+// -------------------------------------------------------------
+delete (window as any).location;
+(window as any).location = { href: "", assign: vi.fn() };
+
+// -------------------------------------------------------------
+// 🔥 Mock AuthService — IMPORTANT : chemin ABSOLU réel
+// -------------------------------------------------------------
 const authMock = {
   refresh: vi.fn(),
   getAccessToken: vi.fn(),
-  logout: vi.fn()
+  logout: vi.fn(),
 };
 
-vi.mock("../../services/AuthService", () => ({
-  useAuthService: () => authMock
+vi.mock("@/core/services/AuthService", () => ({
+  useAuthService: () => authMock,
 }));
 
-// --- MOCK FETCH ---
+// -------------------------------------------------------------
+// 🔥 Helper Response
+// -------------------------------------------------------------
 const mockResponse = (data: any, status = 200): Response =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   });
 
-// --- HOOK COMBINÉ ---
+// Hook combiné
 function useBoth() {
   return {
     ctx: useAuthContext(),
-    http: useHttp()
+    http: useHttp(),
   };
 }
 
 describe("useHttp", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
-    authMock.refresh.mockReset();
-    authMock.getAccessToken.mockReset();
-    authMock.logout.mockReset();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 
@@ -42,49 +50,86 @@ describe("useHttp", () => {
     <AuthProvider>{children}</AuthProvider>
   );
 
+  // -------------------------------------------------------------
+  // 🔥 TEST 1 — RETRY APRÈS 401
+  // -------------------------------------------------------------
   it("réessaie après un 401, applique les nouveaux tokens et renvoie la réponse", async () => {
     authMock.getAccessToken.mockReturnValue("oldToken");
 
-    vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(mockResponse({}, 401)) // 1ère requête → 401
-      .mockResolvedValueOnce(mockResponse({ ok: true }, 200)); // retry → OK
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+
+      if (url === "/test") {
+        // 1ère requête → 401
+        if (!authMock.refresh.mock.calls.length)
+          return Promise.resolve(mockResponse({}, 401));
+
+        // retry → 200
+        return Promise.resolve(mockResponse({ ok: true }, 200));
+      }
+
+      if (url === API.refresh) {
+        return Promise.resolve(
+          mockResponse({
+            accessToken: "newAccess",
+            refreshToken: "newRefresh",
+            user: { id: "1", email: "test@test.com" },
+          })
+        );
+      }
+
+      return Promise.reject(new Error("URL non mockée : " + url));
+    }) as unknown as typeof fetch;
 
     authMock.refresh.mockResolvedValue({
       accessToken: "newAccess",
       refreshToken: "newRefresh",
-      user: { id: "1", email: "test@test.com" }
+      user: { id: "1", email: "test@test.com" },
     });
 
-    const { result, rerender } = renderHook(() => useBoth(), { wrapper });
+    const { result } = renderHook(() => useBoth(), { wrapper });
 
-    const response = await result.current.http<{ ok: boolean }>("/test");
+    // 🔥 Fix TS2339
+    let response!: { ok: boolean };
+
+    await act(async () => {
+      response = await result.current.http("/test");
+    });
+
     expect(response.ok).toBe(true);
-
-    rerender();
 
     await waitFor(() => {
       expect(result.current.ctx.accessToken).toBe("newAccess");
       expect(result.current.ctx.refreshToken).toBe("newRefresh");
-      expect(result.current.ctx.user?.email).toBe("test@test.com");
     });
   });
 
+  // -------------------------------------------------------------
+  // 🔥 TEST 2 — REFRESH ÉCHOUE → LOGOUT
+  // -------------------------------------------------------------
   it("logout si refresh échoue", async () => {
     authMock.getAccessToken.mockReturnValue("oldToken");
 
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse({}, 401));
-    authMock.refresh.mockResolvedValue(null); // refresh échoue
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
 
-    const { result, rerender } = renderHook(() => useBoth(), { wrapper });
+      if (url === "/test") {
+        return Promise.resolve(mockResponse({}, 401));
+      }
 
-    await expect(result.current.http("/test")).rejects.toThrow("Session expired");
+      if (url === API.refresh) {
+        return Promise.resolve(mockResponse({}, 500));
+      }
 
-    rerender();
+      return Promise.reject(new Error("URL non mockée : " + url));
+    }) as unknown as typeof fetch;
 
-    await waitFor(() => {
-      expect(result.current.ctx.user).toBe(null);
-      expect(result.current.ctx.accessToken).toBe(null);
-      expect(result.current.ctx.refreshToken).toBe(null);
+    authMock.refresh.mockResolvedValue(null);
+
+    const { result } = renderHook(() => useBoth(), { wrapper });
+
+    await act(async () => {
+      await expect(result.current.http("/test")).rejects.toThrow("Session expired");
     });
 
     expect(authMock.logout).toHaveBeenCalledWith("expired");

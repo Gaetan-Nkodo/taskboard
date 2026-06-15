@@ -1,6 +1,6 @@
-import { rawHttp } from "../../core/api/rawHttp";
-import { API } from "../../core/api/endpoints";
-import type { Board } from "../../core/models/Board";
+import { rawHttp } from "@/core/api/rawHttp";
+import { API } from "@/core/api/endpoints";
+import type { Board } from "@/core/models/Board";
 
 test("boards endpoint returns a list", async () => {
   const result = await rawHttp<Board[]>(API.boards);

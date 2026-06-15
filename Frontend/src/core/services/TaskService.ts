@@ -1,6 +1,6 @@
-import { useApiClient } from "../api/apiClient";
-import { API } from "../api/endpoints";
-import type { Task } from "../models/Task";
+import { useApiClient } from "@/api/apiClient";
+import { API } from "@/api/endpoints";
+import type { Task } from "@/models/Task";
 
 export function useTaskService() {
   const api = useApiClient();

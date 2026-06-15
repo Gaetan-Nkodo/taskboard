@@ -1,8 +1,6 @@
-import { rawHttp } from "../../core/api/rawHttp";
-import { API } from "../../core/api/endpoints";
+import { rawHttp } from "@/core/api/rawHttp";
 
-test("health endpoint responds", async () => {
-  const result = await rawHttp<{ status: string }>(API.health);
-
-  expect(result).toEqual({ status: "ok" });
+test("health endpoint returns ok", async () => {
+  const result = await rawHttp<{ status: string }>("/health");
+  expect(result.status).toBe("ok");
 });

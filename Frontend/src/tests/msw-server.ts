@@ -2,42 +2,38 @@ import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 
 export const server = setupServer(
-  // Health
-  http.get("/health", () => HttpResponse.json({ status: "ok" })),
+  http.get(/\/health$/, () =>
+    HttpResponse.json({ status: "ok" })
+  ),
 
-  // Boards
-  http.get("*/api/v1/boards", () =>
+  http.get(/\/boards$/, () =>
     HttpResponse.json([
       { id: "1", name: "Board A" },
       { id: "2", name: "Board B" }
     ])
   ),
 
-  // Tasks
-  http.get("*/api/v1/tasks", () =>
+  http.get(/\/tasks$/, () =>
     HttpResponse.json([
       { id: "1", title: "Task A" },
       { id: "2", title: "Task B" }
     ])
   ),
 
-  // Login
-  http.post("*/api/v1/auth/login", async () =>
+  http.post(/\/auth\/login$/, async () =>
     HttpResponse.json({
       accessToken: "ACCESS_TOKEN",
       refreshToken: "REFRESH_TOKEN",
-      user: { id: "1", email: "test@test.com" }
+      user: { id: "1", email: "test@test.com", displayName: "Gaétan" }
     })
   ),
 
-  // Forgot password
-  http.post("*/api/v1/auth/forgot-password", async () => {
-    return HttpResponse.json({});
-  }),
+  http.post(/\/auth\/forgot-password$/, async () =>
+    HttpResponse.json({})
+  ),
 
-  // Reset password
-  http.post("*/api/v1/auth/reset-password", async ({ request }) => {
-    const body = (await request.json()) as { token: string; newPassword: string };
+  http.post(/\/auth\/reset-password$/, async ({ request }) => {
+    const body = (await request.json()) as { token?: string; newPassword?: string };
 
     if (body.token === "BADTOKEN") {
       return HttpResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -45,16 +41,16 @@ export const server = setupServer(
 
     return HttpResponse.json({});
   }),
-  
-  // Change password
-  http.post("*/api/v1/auth/change-password", async ({ request }) => {
+
+  http.post(/\/auth\/change-password$/, async ({ request }) => {
     const body = (await request.json()) as {
-      currentPassword: string;
-      newPassword: string;
+      currentPassword?: string;
+      newPassword?: string;
     };
 
     const auth = request.headers.get("authorization");
-    if (!auth || !auth.startsWith("Bearer ")) {
+
+    if (!auth?.startsWith("Bearer ")) {
       return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -62,6 +58,6 @@ export const server = setupServer(
       return HttpResponse.json({ error: "Bad password" }, { status: 400 });
     }
 
-    return HttpResponse.json({ ok: true }, { status: 200 });
+    return HttpResponse.json({ ok: true });
   })
 );

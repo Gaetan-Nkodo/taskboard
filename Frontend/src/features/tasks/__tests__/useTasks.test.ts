@@ -5,7 +5,7 @@ import { useTasks } from "../useTasks";
 // --- MOCK useApiClient ---
 const mockGet = vi.fn();
 
-vi.mock("../../../core/api/apiClient", () => ({
+vi.mock("@/core/api/apiClient", () => ({
   useApiClient: () => ({
     get: mockGet
   })
