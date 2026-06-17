@@ -27,7 +27,8 @@ describe("ProtectedRoute", () => {
       email: "test@test.com",
       name: "Gaetan"
     }));
-    localStorage.setItem("token", "abc");
+    localStorage.setItem("accessToken", "abc");
+    localStorage.setItem("refreshToken", "ref");
 
     const { container } = render(
       <MemoryRouter initialEntries={["/"]}>
@@ -39,8 +40,8 @@ describe("ProtectedRoute", () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {});
-
-    expect(container.innerHTML).toContain("PRIVATE");
+    await waitFor(() => {
+      expect(container.innerHTML).toContain("PRIVATE");
+    });
   });
 });

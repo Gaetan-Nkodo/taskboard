@@ -6,9 +6,10 @@ import ResetPasswordPage from "@/features/auth/ResetPasswordPage";
 import { ChangePasswordPage } from "@/features/auth/ChangePasswordPage";
 
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute";
-import { BoardsPage } from "@/features/boards/BoardsPage";
+import { BoardsPage } from "@/features/boards/pages/BoardsPage";
 
 import { Layout } from "@/components/layout/Layout";
+import { BoardDetailsPage } from "@/features/boards/pages/BoardDetailsPage";
 
 export const router = createBrowserRouter([
   // --- Pages publiques ---
@@ -27,7 +28,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <BoardsPage /> },
       { path: "boards", element: <BoardsPage /> },
-      { path: "boards/:id", element: <BoardsPage /> },
+      { path: "boards/:id", element: <BoardDetailsPage  /> },
       { path: "change-password", element: <ChangePasswordPage /> }
     ]
   }

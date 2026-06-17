@@ -1,102 +1,113 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
-
-import { useAuth } from "@/features/auth/useAuth";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/features/auth/AuthProvider";
 
 import { Card, Input, Button } from "@/components/ui";
+import { LoginResponse } from "@/core/models/Auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuthContext();
 
-  const { login } = useAuth();
-  const { applyTokens } = useAuthContext();
-
-  const returnTo = location.state?.from || "/boards";
+  const from = location.state?.from || "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-
-  // 🔥 Message d’expiration
-  useEffect(() => {
-    const reason = localStorage.getItem("logoutReason");
-
-    if (reason === "expired") {
-      setMessage("Votre session a expiré, veuillez vous reconnecter");
-      localStorage.removeItem("logoutReason");
-    }
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError(null);
+    setLoading(true);
 
     try {
-      const result = await login({ email, password });
-      applyTokens(result);
-      navigate(returnTo);
-    } catch {
-      setError("Identifiants invalides");
+      // 🔥 IMPORTANT : le login NE DOIT PAS passer par useHttp()
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const result: LoginResponse = await response.json();
+
+      // 🔥 Mise à jour du contexte AuthProvider
+      login(result);
+
+      // 🔥 Redirection vers la page d’origine
+      navigate(from);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err) ?? "Erreur de connexion";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="login-bg min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-sm p-6 animate-fadeIn">
-        <h1 className="text-xl font-bold mb-4">Connexion</h1>
-
-        {message && (
-          <div className="mb-2 text-sm text-blue-600">{message}</div>
-        )}
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <Card className="w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6 text-center">Connexion</h1>
 
         {error && (
-          <div className="mb-2 text-sm text-red-600">{error}</div>
+          <div className="mb-4 text-red-600 text-sm">{error}</div>
         )}
 
-        <form
-          role="form"
-          data-testid="login-form"
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
-          <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-          />
-
-          <Input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-
-          <Button type="submit" className="w-full">
-            Se connecter
-          </Button>
-
-          <div className="flex justify-between text-sm">
-            <Link
-              to="/forgot-password"
-              className="text-primary hover:underline"
-            >
-              Mot de passe oublié
-            </Link>
-
-            {/* Si un jour tu ajoutes l'inscription */}
-            {/* <Link to="/register" className="text-primary hover:underline">
-              Créer un compte
-            </Link> */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1"
+            />
           </div>
+
+          <div>
+            <label htmlFor="password" className="text-sm font-medium">
+              Mot de passe
+            </label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            variant="default"
+            disabled={loading}
+            className="w-full"
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </Button>
         </form>
+
+        <div className="mt-4 text-center">
+          <a
+            href="/forgot-password"
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Mot de passe oublié ?
+          </a>
+        </div>
       </Card>
     </div>
   );

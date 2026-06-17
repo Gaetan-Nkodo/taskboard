@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { useAuth } from "../useAuth";
+import { AuthProvider, useAuthContext } from "../AuthProvider";
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  return <MemoryRouter>{children}</MemoryRouter>;
+  return (
+    <MemoryRouter>
+      <AuthProvider>{children}</AuthProvider>
+    </MemoryRouter>
+  );
 }
 
 describe("logout", () => {
@@ -13,16 +17,17 @@ describe("logout", () => {
   });
 
   it("supprime token et user", () => {
-    localStorage.setItem("token", "abc");
+    localStorage.setItem("accessToken", "abc");
+    localStorage.setItem("refreshToken", "ref");
     localStorage.setItem("user", JSON.stringify({ id: "1" }));
 
-    const { result } = renderHook(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuthContext(), { wrapper });
 
     act(() => {
       result.current.logout();
     });
 
-    expect(localStorage.getItem("token")).toBeNull();
-    expect(result.current.getUser()).toBeNull();
+    expect(localStorage.getItem("accessToken")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull();
   });
 });

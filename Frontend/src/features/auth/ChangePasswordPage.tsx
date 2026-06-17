@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/features/auth/useAuth";
 import toast from "react-hot-toast";
 
-import { Card, Input, Button } from "@/components/ui";
+import { useAuthContext } from "@/features/auth/AuthProvider";
+import { useHttp } from "@/core/api/httpClient";
+
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function ChangePasswordPage() {
-  const { getToken, logout } = useAuth();
+  const http = useHttp();
+  const { logout } = useAuthContext();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -20,38 +25,35 @@ export function ChangePasswordPage() {
       return;
     }
 
-    const response = await fetch("/api/v1/auth/change-password", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + getToken()
-      },
-      body: JSON.stringify({
-        currentPassword,
-        newPassword
-      })
-    });
+    try {
+      await http("/api/v1/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        })
+      });
 
-    if (response.status === 200) {
       toast.success("Mot de passe mis à jour !");
       setCurrentPassword("");
       setNewPassword("");
       setConfirm("");
-      return;
-    }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err) ?? "";
 
-    if (response.status === 400) {
-      toast.error("Mot de passe actuel incorrect.");
-      return;
-    }
+      if (msg.includes("401") || msg.includes("expired")) {
+        toast.error("Session expirée.");
+        logout();
+        return;
+      }
 
-    if (response.status === 401) {
-      toast.error("Session expirée.");
-      logout();
-      return;
-    }
+      if (msg.includes("400")) {
+        toast.error("Mot de passe actuel incorrect.");
+        return;
+      }
 
-    toast.error("Une erreur est survenue.");
+      toast.error("Une erreur est survenue.");
+    }
   }
 
   return (
@@ -64,7 +66,7 @@ export function ChangePasswordPage() {
             type="password"
             placeholder="Mot de passe actuel"
             value={currentPassword}
-            onChange={e => setCurrentPassword(e.target.value)}
+            onChange={(e) => setCurrentPassword(e.target.value)}
             required
           />
 
@@ -72,7 +74,7 @@ export function ChangePasswordPage() {
             type="password"
             placeholder="Nouveau mot de passe"
             value={newPassword}
-            onChange={e => setNewPassword(e.target.value)}
+            onChange={(e) => setNewPassword(e.target.value)}
             required
           />
 
@@ -80,7 +82,7 @@ export function ChangePasswordPage() {
             type="password"
             placeholder="Confirmer le mot de passe"
             value={confirm}
-            onChange={e => setConfirm(e.target.value)}
+            onChange={(e) => setConfirm(e.target.value)}
             required
           />
 

@@ -1,3 +1,5 @@
+using TaskBoard.Application.DTOs;
+
 namespace TaskBoard.Application.UseCases.Boards;
 
 public class GetBoardsByUserHandler
@@ -9,12 +11,34 @@ public class GetBoardsByUserHandler
         _boardRepository = boardRepository;
     }
 
-    public async Task<List<object>> Handle(Guid userId)
+    public async Task<List<BoardDto>> Handle(Guid userId)
     {
         var boards = await _boardRepository.GetByUserIdAsync(userId);
 
         return boards
-            .Select(b => new { b.Id, b.Name, b.Description })
-            .ToList<object>();
+            .Select(b => new BoardDto(
+                b.Id,
+                b.Name,
+                b.Description,
+                b.Columns
+                    .OrderBy(c => c.Order)
+                    .Select(c => new ColumnDto(
+                        c.Id,
+                        c.Name,
+                        c.Order,
+                        c.Tasks
+                            .OrderBy(t => t.Order)
+                            .Select(t => new TaskDto(
+                                t.Id,
+                                t.Name,
+                                t.Description,
+                                t.Icon,
+                                t.Order
+                            ))
+                            .ToList()
+                    ))
+                    .ToList()
+            ))
+            .ToList();
     }
 }

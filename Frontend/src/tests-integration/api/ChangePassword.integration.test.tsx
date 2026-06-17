@@ -4,7 +4,10 @@ import { router } from "@/app/routes";
 import { AppProviders } from "@/tests/test-utils";
 
 beforeEach(() => {
-  localStorage.setItem("token", "FAKE_TOKEN");
+  localStorage.clear();
+
+  localStorage.setItem("accessToken", "FAKE_TOKEN");
+  localStorage.setItem("refreshToken", "FAKE_REFRESH");
   localStorage.setItem(
     "user",
     JSON.stringify({
@@ -13,6 +16,12 @@ beforeEach(() => {
       displayName: "Gaétan"
     })
   );
+
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    text: () => Promise.resolve("{}"), // 🔥 FIX
+  });
 });
 
 test("navigation → ProtectedRoute → ChangePasswordPage → succès", async () => {

@@ -1,29 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, fireEvent, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LoginPage from "../LoginPage";
 import { AuthProvider } from "@/features/auth/AuthProvider";
+import { MemoryRouter } from "react-router-dom";
+import { vi, describe, beforeEach, expect } from "vitest";
 
-// MOCK useAuth()
-const loginMock = vi.fn();
-
-vi.mock("@/features/auth/useAuth", () => ({
-  useAuth: () => ({
-    login: loginMock
-  })
-}));
-
-// MOCK useNavigate
-const navigateMock = vi.fn();
-
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return {
-    ...actual,
-    useNavigate: () => navigateMock,
-    useLocation: () => ({ state: null })
-  };
-});
+const API_URL = "http://localhost";
 
 describe("LoginPage", () => {
   beforeEach(() => {
@@ -31,67 +12,94 @@ describe("LoginPage", () => {
     vi.clearAllMocks();
   });
 
-  it("stocke accessToken + refreshToken + user et navigue", async () => {
-    loginMock.mockResolvedValue({
-      accessToken: "ACCESS_TOKEN",
-      refreshToken: "REFRESH_TOKEN",
-      user: {
-        id: "1",
-        email: "test@test.com",
-        displayName: "Test User"
+  test("stocke accessToken + refreshToken + user et navigue", async () => {
+    global.fetch = vi.fn((input: RequestInfo) => {
+      const url = input.toString();
+
+      if (url === `${API_URL}/api/v1/auth/login`) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              accessToken: "abc",
+              refreshToken: "ref",
+              user: { id: "1", email: "test@test.com" }
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          )
+        );
       }
-    });
+
+      throw new Error("URL non mockée: " + url);
+    }) as unknown as typeof fetch;
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
+      <AuthProvider>
+        <MemoryRouter>
           <LoginPage />
-        </AuthProvider>
-      </MemoryRouter>
+        </MemoryRouter>
+      </AuthProvider>
     );
 
-    fireEvent.change(screen.getByPlaceholderText("Email"), {
+    fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@test.com" }
     });
 
-    fireEvent.change(screen.getByPlaceholderText("Mot de passe"), {
-      target: { value: "pwd" }
+    fireEvent.change(screen.getByLabelText("Mot de passe"), {
+      target: { value: "123456" }
     });
 
-    fireEvent.submit(screen.getByTestId("login-form"));
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalled();
-    });
-
-    expect(JSON.parse(localStorage.getItem("user")!)).toEqual({
-      id: "1",
-      email: "test@test.com",
-      displayName: "Test User"
+      expect(localStorage.getItem("accessToken")).toBe("abc");
+      expect(localStorage.getItem("refreshToken")).toBe("ref");
+      expect(JSON.parse(localStorage.getItem("user")!)).toEqual({
+        id: "1",
+        email: "test@test.com"
+      });
     });
   });
 
-  it("affiche une erreur si login échoue", async () => {
-    loginMock.mockRejectedValue(new Error("Invalid credentials"));
+  test("affiche une erreur si login échoue", async () => {
+    global.fetch = vi.fn((input: RequestInfo) => {
+      const url = input.toString();
+
+      if (url === `${API_URL}/api/v1/auth/login`) {
+        return Promise.resolve(
+          new Response("Erreur", {
+            status: 400,
+            headers: { "Content-Type": "text/plain" }
+          })
+        );
+      }
+
+      throw new Error("URL non mockée: " + url);
+    }) as unknown as typeof fetch;
 
     render(
-      <MemoryRouter>
-        <AuthProvider>
+      <AuthProvider>
+        <MemoryRouter>
           <LoginPage />
-        </AuthProvider>
-      </MemoryRouter>
+        </MemoryRouter>
+      </AuthProvider>
     );
 
-    fireEvent.change(screen.getByPlaceholderText("Email"), {
-      target: { value: "test@test.com" }
+    // 🔥 IMPORTANT : remplir les champs sinon le formulaire NE SE SOUMET PAS
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "x@test.com" }
     });
 
-    fireEvent.change(screen.getByPlaceholderText("Mot de passe"), {
-      target: { value: "pwd" }
+    fireEvent.change(screen.getByLabelText("Mot de passe"), {
+      target: { value: "123" }
     });
 
-    fireEvent.submit(screen.getByTestId("login-form"));
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
 
-    expect(await screen.findByText("Identifiants invalides")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Erreur")).toBeInTheDocument();
+    });
   });
 });

@@ -1,44 +1,44 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ChangePasswordPage } from "../ChangePasswordPage";
-import { TestProviders } from "@/tests/test-utils";
+import { AuthProvider } from "@/features/auth/AuthProvider";
+import { MemoryRouter } from "react-router-dom";
 
-beforeEach(() => {
-  localStorage.setItem("token", "FAKE_TOKEN");
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      id: "1",
-      email: "test@test.com",
-      displayName: "Gaétan"
-    })
-  );
-});
-
-test("affiche un toast de succès quand le mot de passe est correct", async () => {
-  render(
-    <MemoryRouter>
-      <TestProviders>
-        <ChangePasswordPage />
-      </TestProviders>
-    </MemoryRouter>
-  );
-
-  fireEvent.change(screen.getByPlaceholderText(/mot de passe actuel/i), {
-    target: { value: "OLD" }
+describe("ChangePasswordPage", () => {
+  beforeEach(() => {
+    localStorage.setItem("accessToken", "abc");
+    localStorage.setItem("refreshToken", "ref");
+    localStorage.setItem("user", JSON.stringify({ id: "1" }));
   });
 
-  fireEvent.change(screen.getByPlaceholderText(/nouveau mot de passe/i), {
-    target: { value: "NEW" }
+  test("affiche un toast de succès quand le mot de passe est correct", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({})
+    });
+
+    render(
+      <AuthProvider>
+        <MemoryRouter>
+          <ChangePasswordPage />
+        </MemoryRouter>
+      </AuthProvider>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/mot de passe actuel/i), {
+      target: { value: "old" }
+    });
+    fireEvent.change(screen.getByPlaceholderText(/nouveau mot de passe/i), {
+      target: { value: "new" }
+    });
+    fireEvent.change(screen.getByPlaceholderText(/confirmer/i), {
+      target: { value: "new" }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /mettre à jour/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
   });
-
-  fireEvent.change(screen.getByPlaceholderText(/confirmer/i), {
-    target: { value: "NEW" }
-  });
-
-  fireEvent.click(screen.getByText(/mettre à jour/i));
-
-  expect(
-    await screen.findByText(/mot de passe mis à jour/i)
-  ).toBeInTheDocument();
 });

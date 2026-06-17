@@ -1,49 +1,48 @@
 import { useAuthContext } from "@/features/auth/AuthProvider";
-import { useAuthService } from "../services/AuthService";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useHttp() {
-  const { accessToken, applyTokens, logout: contextLogout } = useAuthContext();
-  const auth = useAuthService();
+  const { accessToken, refreshToken, applyTokens, logout } = useAuthContext();
 
-  return async function http<T>(
-    url: string,
-    options: RequestInit = {},
-    retry = true
-  ): Promise<T> {
-    const token = accessToken ?? auth.getAccessToken();
-
+  return async function http<T>(url: string, options: RequestInit = {}, retry = true): Promise<T> {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(options.headers || {})
     };
 
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(`${API_URL}${url}`, { ...options, headers });
 
-    // -----------------------------
-    // 🔥 401 → tentative de refresh
-    // -----------------------------
-    if (response.status === 401 && retry) {
-      const refreshed = await auth.refresh();
+    if (response.status === 401 && retry && accessToken && refreshToken) {
+      try {
+        const refreshResponse = await fetch(`${API_URL}/api/v1/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken })
+        });
 
-      if (refreshed) {
-        applyTokens(refreshed);
-        return http<T>(url, options, false);
+        if (refreshResponse.ok) {
+          const refreshed = await refreshResponse.json();
+          applyTokens(refreshed);
+          return http<T>(url, options, false);
+        }
+      } catch {
+        // ignore refresh errors
       }
 
-      // ❗ IMPORTANT : un seul logout → AuthService
-      auth.logout("expired");
-
+      logout();
       throw new Error("Session expired");
     }
 
-    // -----------------------------
-    // 🔥 autres erreurs HTTP
-    // -----------------------------
     if (!response.ok) {
-      throw new Error(await response.text());
+      const errorText = await response.text();
+      throw new Error(errorText || "Unknown error");
     }
 
-    return response.json();
+    const text = await response.text();
+    if (!text) return null as T;
+
+    return JSON.parse(text) as T;
   };
 }

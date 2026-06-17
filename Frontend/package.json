@@ -7,13 +7,16 @@
     "dev": "vite && eslint --watch",
     "build": "tsc -b && vite build",
     "build:staging": "tsc -b && vite build --mode staging",
-    "lint": "eslint .",
     "preview": "vite preview",
     "test": "vite build && vitest --watch",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "predeploy": "npm run type-check && npm run lint && npm run build"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
+    "@heroicons/react": "^2.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jwt-decode": "^4.0.0",

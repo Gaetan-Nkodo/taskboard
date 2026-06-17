@@ -2,11 +2,15 @@ import { Navigate } from "react-router-dom";
 import { useAuthContext } from "./AuthProvider";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuthContext();
+  const { user, accessToken, loading } = useAuthContext();
 
-  if (loading) return <div>Chargement...</div>;
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user || !accessToken) {
+    return <Navigate to="/login" replace />;
+  }
 
-  return children;
+  return <>{children}</>;
 };

@@ -11,12 +11,15 @@ export default defineConfig({
     }
   },
 
+  css: {
+    transformer: "postcss"
+  },
+
   build: {
     cssMinify: false,
     target: "esnext"
   },
 
-  // Vitest intégré dans le même fichier
   test: {
     globals: true,
     environment: "jsdom",
