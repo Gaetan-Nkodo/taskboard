@@ -1,6 +1,13 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuthContext } from "../AuthProvider";
 
+// Mock de window.location.assign pour éviter une navigation réelle
+const mockAssign = vi.fn();
+Object.defineProperty(window, "location", {
+  value: { assign: mockAssign },
+  writable: true
+});
+
 function wrapper({ children }: { children: React.ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>;
 }
@@ -8,6 +15,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe("AuthProvider", () => {
   beforeEach(() => {
     localStorage.clear();
+    mockAssign.mockReset();
   });
 
   it("applyTokens met à jour le contexte ET le localStorage", async () => {
@@ -56,6 +64,9 @@ describe("AuthProvider", () => {
     expect(localStorage.getItem("user")).toBe(null);
     expect(localStorage.getItem("accessToken")).toBe(null);
     expect(localStorage.getItem("refreshToken")).toBe(null);
+
+    // Vérifie que la redirection a été appelée
+    expect(mockAssign).toHaveBeenCalledWith("/login");
   });
 
   it("restaure la session depuis localStorage au montage", async () => {

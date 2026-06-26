@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Boards;
+using TaskBoard.Application.UseCases.Tasks;
 
 namespace TaskBoard.Api.Controllers;
 
@@ -18,6 +19,7 @@ public class BoardsController : ControllerBase
     private readonly GetBoardsByUserHandler _getByUserHandler;
     private readonly UpdateBoardHandler _updateHandler;
     private readonly DeleteBoardHandler _deleteHandler;
+    private readonly GetTasksByBoardHandler _getTasksByBoardHandler;
 
     private readonly CreateTaskHandler _createTaskHandler;
 
@@ -27,7 +29,8 @@ public class BoardsController : ControllerBase
         GetBoardsByUserHandler getByUserHandler,
         UpdateBoardHandler updateHandler,
         DeleteBoardHandler deleteHandler,
-        CreateTaskHandler createTaskHandler)
+        CreateTaskHandler createTaskHandler,
+        GetTasksByBoardHandler getTasksByBoardHandler)
     {
         _createHandler = createHandler;
         _getHandler = getHandler;
@@ -35,6 +38,7 @@ public class BoardsController : ControllerBase
         _updateHandler = updateHandler;
         _deleteHandler = deleteHandler;
         _createTaskHandler = createTaskHandler;
+        _getTasksByBoardHandler = getTasksByBoardHandler;
     }
 
     [HttpGet]
@@ -86,6 +90,14 @@ public class BoardsController : ControllerBase
         var userId = GetUserId();
         var taskId = await _createTaskHandler.Handle(boardId, userId, request);
         return Created($"/api/v1/tasks/{taskId}", new { id = taskId });
+    }
+
+    [HttpGet("{boardId:guid}/tasks")]
+    public async Task<IActionResult> GetTasks(Guid boardId)
+    {
+        var userId = GetUserId();
+        var tasks = await _getTasksByBoardHandler.Handle(boardId, userId);
+        return Ok(tasks);
     }
 
     private Guid GetUserId()

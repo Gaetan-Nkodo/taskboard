@@ -1,3 +1,4 @@
+import type { TaskDto } from "@/features/tasks/types/TaskTypes";
 export interface CreateBoardRequest {
   name: string;
   description?: string | null;
@@ -8,19 +9,10 @@ export interface UpdateBoardRequest {
   description?: string | null;
 }
 
-export interface TaskDto {
-  id: string;
-  name: string;
-  description?: string | null;
-  icon?: string | null;
-  order: number;
-}
-
 export interface ColumnDto {
   id: string;
   name: string;
   order: number;
-  tasks: TaskDto[];
 }
 
 export interface BoardDto {
@@ -28,6 +20,7 @@ export interface BoardDto {
   name: string;
   description?: string | null;
   columns: ColumnDto[];
+  tasks?: TaskDto[];
   createdAt: string;
   updatedAt: string;
 }

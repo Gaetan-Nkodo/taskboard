@@ -30,6 +30,7 @@ public class GetBoardsByUserHandler
                             .OrderBy(t => t.Order)
                             .Select(t => new TaskDto(
                                 t.Id,
+                                t.ColumnId,
                                 t.Name,
                                 t.Description,
                                 t.Icon,

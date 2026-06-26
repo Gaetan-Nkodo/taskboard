@@ -25,8 +25,7 @@ export default defineConfig({
     environment: "jsdom",
     css: false,
     setupFiles: [
-      "./src/setupTests.ts",
-      "./src/tests/setup-msw.ts"
+      "./src/setupTests.ts"
     ]
   }
 });

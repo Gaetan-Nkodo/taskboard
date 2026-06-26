@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
 
   seq:
@@ -15,17 +17,17 @@ services:
       - taskboard-net
 
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: postgres:16
     container_name: taskboard_db
     restart: unless-stopped
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Developer"
-      SA_PASSWORD: "StrongPassword123!"
+      POSTGRES_USER: taskboard
+      POSTGRES_PASSWORD: StrongPassword123!
+      POSTGRES_DB: TaskBoard
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - sql-data:/var/opt/mssql
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - taskboard-net
 
@@ -40,7 +42,7 @@ services:
       - seq
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__DefaultConnection: "Server=db;Database=TaskBoard;User ID=sa;Password=Admin123!;Encrypt=False;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TaskBoard;Username=taskboard;Password=StrongPassword123!"
       Jwt__Key: "SuperSecretKeyForJwt123!"
       Jwt__Issuer: "TaskBoard"
       Jwt__Audience: "TaskBoardUsers"
@@ -52,7 +54,7 @@ services:
 
 volumes:
   seq-data:
-  sql-data:
+  postgres-data:
 
 networks:
   taskboard-net:

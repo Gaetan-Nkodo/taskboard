@@ -13,7 +13,7 @@ public class CreateBoardHandlerTests
     private readonly IBoardRepository _boardRepository = Substitute.For<IBoardRepository>();
 
     [Fact]
-    public async Task Handle_ShouldCreateBoardWithDefaultColumnsAndTasks()
+    public async Task Handle_ShouldCreateBoardWithDefaultColumns()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -31,11 +31,13 @@ public class CreateBoardHandlerTests
             .AddAsync(Arg.Is<Board>(b =>
                 b.UserId == userId &&
                 b.Name == "My Board" &&
-                b.Columns.Count == 3 &&
+                b.Columns.Count == 5 &&
+                b.Columns.Any(c => c.Name == "Backlog") &&
+                b.Columns.Any(c => c.Name == "Ready") &&
                 b.Columns.Any(c => c.Name == "In Progress") &&
-                b.Columns.Any(c => c.Name == "Completed") &&
-                b.Columns.Any(c => c.Name == "Won't Do") &&
-                b.Columns.SelectMany(c => c.Tasks).Count() == 3
+                b.Columns.Any(c => c.Name == "Review") &&
+                b.Columns.Any(c => c.Name == "Done") &&
+                b.Columns.SelectMany(c => c.Tasks).Count() == 0
             ));
     }
 }

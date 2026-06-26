@@ -1,6 +1,5 @@
 import { http, HttpResponse } from "msw";
 
-// Types
 type RegisterBody = {
   email: string;
   password: string;
@@ -12,8 +11,15 @@ type LoginBody = {
   password: string;
 };
 
+type ChangePasswordBody = {
+  currentPassword: string;
+  newPassword: string;
+};
+
 export const handlers = [
-  // --- Auth: Register ---
+  // -----------------------------
+  // AUTH
+  // -----------------------------
   http.post("/api/v1/auth/register", async ({ request }) => {
     const body = (await request.json()) as RegisterBody;
 
@@ -24,7 +30,6 @@ export const handlers = [
     });
   }),
 
-  // --- Auth: Login ---
   http.post("/api/v1/auth/login", async ({ request }) => {
     const body = (await request.json()) as LoginBody;
 
@@ -39,9 +44,8 @@ export const handlers = [
     });
   }),
 
-  // --- Auth: Refresh ---
-  http.post("/api/v1/auth/refresh", async () => {
-    return HttpResponse.json({
+  http.post("/api/v1/auth/refresh", () =>
+    HttpResponse.json({
       accessToken: "new-token",
       refreshToken: "new-refresh",
       user: {
@@ -49,28 +53,22 @@ export const handlers = [
         email: "test@test.com",
         fullName: "Test User"
       }
-    });
-  }),
+    })
+  ),
 
-  // --- Auth: Forgot Password ---
-  http.post("/api/v1/auth/forgot-password", async () => {
-    return HttpResponse.json({ ok: true });
-  }),
+  http.post("/api/v1/auth/forgot-password", () =>
+    HttpResponse.json({ ok: true })
+  ),
 
-  // --- Auth: Reset Password ---
-  http.post("/api/v1/auth/reset-password", async () => {
-    return HttpResponse.json({ ok: true });
-  }),
+  http.post("/api/v1/auth/reset-password", () =>
+    HttpResponse.json({ ok: true })
+  ),
 
-  // --- Auth: Change Password ---
   http.post("/api/v1/auth/change-password", async ({ request }) => {
-    const body = (await request.json()) as {
-      currentPassword: string;
-      newPassword: string;
-    };
+    const body = (await request.json()) as ChangePasswordBody;
 
     const auth = request.headers.get("authorization");
-    if (!auth || !auth.startsWith("Bearer ")) {
+    if (!auth?.startsWith("Bearer ")) {
       return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -78,27 +76,33 @@ export const handlers = [
       return HttpResponse.json({ error: "Bad password" }, { status: 400 });
     }
 
-    return HttpResponse.json({ ok: true }, { status: 200 });
+    return HttpResponse.json({ ok: true });
   }),
 
-  // --- Boards ---
-  http.get("/api/v1/boards", () => {
-    return HttpResponse.json([
+  // -----------------------------
+  // BOARDS
+  // -----------------------------
+  http.get("/api/v1/boards", () =>
+    HttpResponse.json([
       { id: "b1", name: "Board A", description: "Desc A" },
       { id: "b2", name: "Board B", description: "Desc B" }
-    ]);
-  }),
+    ])
+  ),
 
-  // --- Tasks ---
-  http.get("/api/v1/tasks", () => {
-    return HttpResponse.json([
+  // -----------------------------
+  // TASKS
+  // -----------------------------
+  http.get("/api/v1/tasks", () =>
+    HttpResponse.json([
       { id: "t1", title: "Task 1", boardId: "b1", columnId: "c1" },
       { id: "t2", title: "Task 2", boardId: "b1", columnId: "c1" }
-    ]);
-  }),
+    ])
+  ),
 
-  // --- Health ---
-  http.get("/health", () => {
-    return HttpResponse.json({ status: "ok" });
-  })
+  // -----------------------------
+  // HEALTH
+  // -----------------------------
+  http.get("/health", () =>
+    HttpResponse.json({ status: "ok" })
+  )
 ];

@@ -1,49 +1,68 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createBoardService } from "../BoardService";
+import type { CreateBoardRequest, UpdateBoardRequest } from "../../types/BoardTypes";
 
 describe("BoardService", () => {
-  const mockHttp = vi.fn();
+  let http: ReturnType<typeof vi.fn>;
   let service: ReturnType<typeof createBoardService>;
 
   beforeEach(() => {
-    mockHttp.mockReset();
-    service = createBoardService(mockHttp);
+    http = vi.fn();
+    service = createBoardService(http as any);
   });
 
   it("getBoards appelle GET /api/v1/boards", async () => {
-    mockHttp.mockResolvedValue([]);
+    http.mockResolvedValue([]);
     await service.getBoards();
-    expect(mockHttp).toHaveBeenCalledWith("/api/v1/boards");
+
+    expect(http).toHaveBeenCalledWith("/api/v1/boards");
   });
 
   it("getBoard appelle GET /api/v1/boards/:id", async () => {
-    mockHttp.mockResolvedValue({ id: "b1" });
+    http.mockResolvedValue({ id: "b1" });
     await service.getBoard("b1");
-    expect(mockHttp).toHaveBeenCalledWith("/api/v1/boards/b1");
+
+    expect(http).toHaveBeenCalledWith("/api/v1/boards/b1");
   });
 
   it("createBoard appelle POST /api/v1/boards", async () => {
-    mockHttp.mockResolvedValue({ id: "new-id" });
-    await service.createBoard({ name: "Test", description: "" });
-    expect(mockHttp).toHaveBeenCalledWith("/api/v1/boards", {
+    const payload: CreateBoardRequest = {
+      name: "Test",
+      description: "",
+    };
+
+    http.mockResolvedValue({ id: "new-id" });
+
+    await service.createBoard(payload);
+
+    expect(http).toHaveBeenCalledWith("/api/v1/boards", {
       method: "POST",
-      body: JSON.stringify({ name: "Test", description: "" }),
+      body: JSON.stringify(payload),
     });
   });
 
   it("updateBoard appelle PUT /api/v1/boards/:id", async () => {
-    mockHttp.mockResolvedValue(undefined);
-    await service.updateBoard("b1", { name: "Updated", description: "" });
-    expect(mockHttp).toHaveBeenCalledWith("/api/v1/boards/b1", {
+    const payload: UpdateBoardRequest = {
+      name: "Updated",
+      description: "",
+    };
+
+    http.mockResolvedValue(undefined);
+
+    await service.updateBoard("b1", payload);
+
+    expect(http).toHaveBeenCalledWith("/api/v1/boards/b1", {
       method: "PUT",
-      body: JSON.stringify({ name: "Updated", description: "" }),
+      body: JSON.stringify(payload),
     });
   });
 
   it("deleteBoard appelle DELETE /api/v1/boards/:id", async () => {
-    mockHttp.mockResolvedValue(undefined);
+    http.mockResolvedValue(undefined);
+
     await service.deleteBoard("b1");
-    expect(mockHttp).toHaveBeenCalledWith("/api/v1/boards/b1", {
+
+    expect(http).toHaveBeenCalledWith("/api/v1/boards/b1", {
       method: "DELETE",
     });
   });

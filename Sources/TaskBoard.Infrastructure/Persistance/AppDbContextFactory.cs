@@ -10,7 +10,7 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
 
         optionsBuilder.UseNpgsql(
-            "Host=localhost;Port=5432;Database=taskboard_local;Username=postgres;Password=postgres;SSL Mode=Disable",
+            "Host=localhost;Port=5432;Database=TaskBoard;Username=taskboard;Password=StrongPassword123!;SSL Mode=Disable",
             b => b.MigrationsAssembly("TaskBoard.Infrastructure")
         );
 

@@ -1,79 +1,14 @@
-import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { setupServer } from "msw/node";
-import { http, HttpResponse } from "msw";
+import { describe, it, expect, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { BoardDetailsPage } from "../BoardDetailsPage";
 import { TestProviders } from "@/tests/TestProviders";
+import { server } from "@/tests/msw-server";
+import { http, HttpResponse } from "msw";
 
-let board = {
-  id: "1",
-  name: "Board A",
-  description: "Desc A",
-  columns: [
-    {
-      id: "c1",
-      name: "Todo",
-      order: 1,
-      tasks: [
-        { id: "t1", name: "Task 1", description: "Task 1 desc", order: 1 },
-      ],
-    },
-    {
-      id: "c2",
-      name: "Done",
-      order: 2,
-      tasks: [],
-    },
-  ],
-};
-
-const server = setupServer(
-  http.get(`${import.meta.env.VITE_API_URL}/api/v1/boards/:id`, ({ params }) => {
-    if (params.id !== "1") {
-      return HttpResponse.json({ message: "Not found" }, { status: 404 });
-    }
-    return HttpResponse.json(board);
-  })
-);
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
-beforeEach(() => {
-  // 🔥 ESSENTIEL : initialiser l’auth sinon useHttp rejette
-  localStorage.setItem("accessToken", "abc123");
-  localStorage.setItem("refreshToken", "ref123");
-  localStorage.setItem("user", JSON.stringify({ id: "1", email: "test@test.com" }));
-
-  board = {
-    id: "1",
-    name: "Board A",
-    description: "Desc A",
-    columns: [
-      {
-        id: "c1",
-        name: "Todo",
-        order: 1,
-        tasks: [
-          { id: "t1", name: "Task 1", description: "Task 1 desc", order: 1 },
-        ],
-      },
-      {
-        id: "c2",
-        name: "Done",
-        order: 2,
-        tasks: [],
-      },
-    ],
-  };
-});
-
-const renderPage = () =>
+const renderPage = (id = "1") =>
   render(
-    <MemoryRouter initialEntries={["/boards/1"]}>
-      {/* 🔥 TestProviders doit inclure AuthProvider */}
+    <MemoryRouter initialEntries={[`/boards/${id}`]}>
       <TestProviders>
         <Routes>
           <Route path="/boards/:id" element={<BoardDetailsPage />} />
@@ -81,6 +16,12 @@ const renderPage = () =>
       </TestProviders>
     </MemoryRouter>
   );
+
+beforeEach(() => {
+  localStorage.setItem("accessToken", "abc123");
+  localStorage.setItem("refreshToken", "ref123");
+  localStorage.setItem("user", JSON.stringify({ id: "1", email: "test@test.com" }));
+});
 
 describe("BoardDetailsPage - Integration", () => {
   it("charge et affiche le board", async () => {
@@ -95,32 +36,42 @@ describe("BoardDetailsPage - Integration", () => {
 
     await screen.findByText("Board A");
 
-    expect(screen.getByText("Todo")).toBeInTheDocument();
+    // Nouvelles colonnes Trello-like
+    expect(screen.getByText("Backlog")).toBeInTheDocument();
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getByText("In Progress")).toBeInTheDocument();
+    expect(screen.getByText("Review")).toBeInTheDocument();
+    expect(screen.getByText("Done")).toBeInTheDocument();
+
+    // Tâches mockées par MSW
     expect(screen.getByText("Task 1")).toBeInTheDocument();
   });
 
   it("affiche 'Aucune tâche.'", async () => {
+    server.use(
+      http.get("/api/v1/boards/:id/tasks", () =>
+        HttpResponse.json([])
+      )
+    );
+
     renderPage();
 
     await screen.findByText("Board A");
 
-    expect(screen.getByText("Aucune tâche.")).toBeInTheDocument();
+    const emptyMessages = screen.getAllByText("Aucune tâche.");
+    expect(emptyMessages.length).toBeGreaterThan(0);
   });
 
-it("affiche une erreur si le board n'existe pas", async () => {
-  render(
-    <MemoryRouter initialEntries={["/boards/999"]}>
-      <TestProviders>
-        <Routes>
-          <Route path="/boards/:id" element={<BoardDetailsPage />} />
-        </Routes>
-      </TestProviders>
-    </MemoryRouter>
-  );
+  it("affiche une erreur si le board n'existe pas", async () => {
+    server.use(
+      http.get("/api/v1/boards/:id", () =>
+        HttpResponse.json({ message: "Not found" }, { status: 404 })
+      )
+    );
 
-  await waitFor(() => {
-    expect(
-      screen.getByText(/Erreur lors du chargement du board/i)
-    ).toBeInTheDocument();
+    renderPage("999");
+
+    expect(await screen.findByText("Erreur lors du chargement du board"))
+      .toBeInTheDocument();
   });
-});});
+});

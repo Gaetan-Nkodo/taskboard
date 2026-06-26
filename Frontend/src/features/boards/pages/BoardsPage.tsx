@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useBoards } from "../hooks/useBoards";
 import { BoardCard } from "../components/BoardCard";
 import { BoardForm } from "../components/BoardForm";
@@ -6,6 +7,8 @@ import { DeleteBoardModal } from "../components/DeleteBoardModal";
 import type { BoardDto } from "../types/BoardTypes";
 
 export function BoardsPage() {
+  const navigate = useNavigate();
+
   const {
     boards,
     loading,
@@ -19,12 +22,8 @@ export function BoardsPage() {
   const [boardToEdit, setBoardToEdit] = useState<BoardDto | null>(null);
   const [boardToDelete, setBoardToDelete] = useState<BoardDto | null>(null);
 
-  // -----------------------------
-  // HANDLERS
-  // -----------------------------
   const handleOpenBoard = (board: BoardDto) => {
-    // Navigation vers BoardDetailsPage
-    window.location.href = `/boards/${board.id}`;
+    navigate(`/boards/${board.id}`);
   };
 
   const handleCreate = async (data: { name: string; description?: string | null }) => {
@@ -43,12 +42,8 @@ export function BoardsPage() {
     setBoardToDelete(null);
   };
 
-  // -----------------------------
-  // RENDER
-  // -----------------------------
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Vos Boards
@@ -62,12 +57,12 @@ export function BoardsPage() {
         </button>
       </div>
 
-      {/* Error */}
       {error && (
-        <div className="text-red-600 mb-4">{error}</div>
+        <div className="text-red-600 mb-4">
+          Erreur lors du chargement des boards : {error}
+        </div>
       )}
 
-      {/* Loading */}
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
@@ -79,7 +74,6 @@ export function BoardsPage() {
         </div>
       )}
 
-      {/* Boards */}
       {!loading && boards.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {boards.map((board) => (
@@ -94,14 +88,12 @@ export function BoardsPage() {
         </div>
       )}
 
-      {/* Empty state */}
       {!loading && boards.length === 0 && (
         <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
           Aucun board pour le moment.
         </div>
       )}
 
-      {/* Create Modal */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
@@ -117,7 +109,6 @@ export function BoardsPage() {
         </div>
       )}
 
-      {/* Edit Modal */}
       {boardToEdit && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
@@ -137,7 +128,6 @@ export function BoardsPage() {
         </div>
       )}
 
-      {/* Delete Modal */}
       <DeleteBoardModal
         board={boardToDelete}
         onConfirm={handleDelete}

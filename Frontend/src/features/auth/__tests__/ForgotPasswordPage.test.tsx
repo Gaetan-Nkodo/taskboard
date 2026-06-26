@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ForgotPasswordPage from "../ForgotPasswordPage";
+import { TestProviders } from "@/tests/TestProviders";
 
 describe("ForgotPasswordPage", () => {
   beforeEach(() => {
@@ -9,11 +10,13 @@ describe("ForgotPasswordPage", () => {
   });
 
   it("envoie l’email et affiche la confirmation", async () => {
-    render(
-      <MemoryRouter>
+   render(
+    <MemoryRouter>
+      <TestProviders>
         <ForgotPasswordPage />
-      </MemoryRouter>
-    );
+      </TestProviders>
+    </MemoryRouter>
+  );
 
     fireEvent.change(screen.getByPlaceholderText("Votre email"), {
       target: { value: "test@example.com" }

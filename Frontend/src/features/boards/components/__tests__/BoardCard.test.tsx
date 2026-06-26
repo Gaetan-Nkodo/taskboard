@@ -39,7 +39,7 @@ describe("BoardCard", () => {
   it("appelle onOpen quand on clique sur la carte", () => {
     renderCard();
 
-    fireEvent.click(screen.getByText("Board A"));
+    fireEvent.click(screen.getByText("Test"));
 
     expect(onOpen).toHaveBeenCalledWith(board);
   });

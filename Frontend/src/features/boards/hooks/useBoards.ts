@@ -15,11 +15,15 @@ export function useBoards() {
     try {
       setLoading(true);
       setError(null);
+
       const data = await service.getBoards();
       setBoards(data);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erreur lors du chargement des boards";
+
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors du chargement des boards";
       setError(message);
+
     } finally {
       setLoading(false);
     }

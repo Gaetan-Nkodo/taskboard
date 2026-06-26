@@ -16,15 +16,11 @@ public class CreateBoardHandler
     {
         var board = new Board(userId, request.Name, request.Description);
 
-        // Colonnes par défaut
-        var inProgress = board.AddColumn("In Progress", 1);
-        var completed = board.AddColumn("Completed", 2);
-        var wontDo = board.AddColumn("Won't Do", 3);
-
-        // Tasks par défaut
-        inProgress.AddTask("Task in Progress");
-        completed.AddTask("Task Completed");
-        wontDo.AddTask("Task Won't Do");
+        board.AddColumn("Backlog", 1);
+        board.AddColumn("Ready", 2);
+        board.AddColumn("In Progress", 3);
+        board.AddColumn("Review", 4);
+        board.AddColumn("Done", 5);
 
         await _boardRepository.AddAsync(board);
         return board.Id;

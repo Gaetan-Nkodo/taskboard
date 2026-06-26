@@ -30,6 +30,7 @@ public class GetBoardHandler
                         .Select(t =>
                             new TaskDto(
                                 t.Id,
+                                t.ColumnId,
                                 t.Name,
                                 t.Description,
                                 t.Icon,

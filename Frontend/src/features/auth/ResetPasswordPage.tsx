@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-
 import { Card, Input, Button } from "@/components/ui";
+import { useHttp } from "@/core/api/httpClient";
 
 export default function ResetPasswordPage() {
+  const http = useHttp();
   const [params] = useSearchParams();
   const token = params.get("token");
 
@@ -15,18 +16,28 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError("");
 
-    const res = await fetch("/api/v1/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, newPassword: password })
-    });
+    try {
+      await http("/api/v1/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token, newPassword: password })
+      });
 
-    if (res.status === 401) {
-      setError("Lien invalide ou expiré.");
-      return;
+      setDone(true);
+
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur inconnue";
+
+      if (
+        message.includes("Invalid") ||
+        message.includes("401") ||
+        message.includes("400")
+      ) {
+        setError("Lien invalide ou expiré.");
+      } else {
+        setError(message);
+      }
     }
-
-    setDone(true);
   }
 
   return (
@@ -36,12 +47,13 @@ export default function ResetPasswordPage() {
 
         {done ? (
           <div className="space-y-4">
-            <div className="text-green-600">
+            <div className="text-green-600" aria-label="success-message">
               Mot de passe mis à jour. Vous pouvez maintenant vous connecter.
             </div>
 
             <Link
               to="/login"
+              aria-label="back-to-login"
               className="block text-center text-sm text-primary hover:underline"
             >
               Retour à la connexion
@@ -50,10 +62,13 @@ export default function ResetPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="text-red-600 text-sm">{error}</div>
+              <div className="text-red-600 text-sm" aria-label="error-message">
+                {error}
+              </div>
             )}
 
             <Input
+              aria-label="password-input"
               type="password"
               placeholder="Nouveau mot de passe"
               value={password}
@@ -61,12 +76,17 @@ export default function ResetPasswordPage() {
               required
             />
 
-            <Button type="submit" className="w-full">
+            <Button
+              aria-label="submit-button"
+              type="submit"
+              className="w-full"
+            >
               Mettre à jour
             </Button>
 
             <Link
               to="/login"
+              aria-label="cancel-link"
               className="block text-center text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Retour à la connexion

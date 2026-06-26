@@ -13,13 +13,16 @@ public class TasksController : ControllerBase
 {
     private readonly UpdateTaskHandler _updateHandler;
     private readonly DeleteTaskHandler _deleteHandler;
+    private readonly MoveTaskHandler _moveHandler;
 
     public TasksController(
         UpdateTaskHandler updateHandler,
-        DeleteTaskHandler deleteHandler)
+        DeleteTaskHandler deleteHandler,
+        MoveTaskHandler moveHandler)
     {
         _updateHandler = updateHandler;
         _deleteHandler = deleteHandler;
+        _moveHandler = moveHandler;
     }
 
     [HttpPut("{taskId:guid}")]
@@ -36,6 +39,21 @@ public class TasksController : ControllerBase
         var userId = GetUserId();
         await _deleteHandler.Handle(taskId, userId);
         return NoContent();
+    }
+
+    [HttpPatch("{taskId:guid}/move")]
+    public async Task<IActionResult> MoveTask(Guid taskId, [FromBody] MoveTaskRequest request)
+    {
+        var userId = GetUserId();
+        try
+        {
+            await _moveHandler.Handle(taskId, userId, request);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     private Guid GetUserId()

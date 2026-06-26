@@ -8,6 +8,8 @@ using TaskBoard.Api.Tests.Fixtures;
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 
+using static TaskBoard.Api.Tests.Integration.TasksTests;
+
 namespace TaskBoard.Api.Tests.Integration;
 
 [Collection("Api collection")]
@@ -42,22 +44,26 @@ public class ColumnsTests
     {
         await AuthenticateAsync();
 
-        var response = await _client.PostAsJsonAsync(
-            "/api/v1/boards",
-            new CreateBoardRequest("Board", "Desc")
-        );
+        var response = await _client.PostAsJsonAsync("/api/v1/boards",
+            new CreateBoardRequest("Board", "Desc"));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var json = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
-        var boardId = json!["id"];
-
-        var boardResponse = await _client.GetAsync($"/api/v1/boards/{boardId}");
-        boardResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var board = await boardResponse.Content.ReadFromJsonAsync<BoardResponseDto>();
-
+        var board = await response.Content.ReadFromJsonAsync<IdResponse>();
         board.Should().NotBeNull();
-        board!.Columns.Should().HaveCount(3);
+
+        var boardDetails = await _client.GetFromJsonAsync<BoardDto>($"/api/v1/boards/{board.Id}");
+        boardDetails.Should().NotBeNull();
+
+        boardDetails!.Columns.Should().HaveCount(5);
+
+        boardDetails.Columns.Select(c => c.Name).Should().Contain(new[]
+        {
+            "Backlog",
+            "Ready",
+            "In Progress",
+            "Review",
+            "Done"
+        });
     }
 }

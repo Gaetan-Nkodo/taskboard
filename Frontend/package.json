@@ -15,8 +15,12 @@
     "predeploy": "npm run type-check && npm run lint && npm run build"
   },
   "dependencies": {
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@fontsource-variable/geist": "^5.2.9",
+    "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
+    "@tanstack/react-query": "^5.101.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jwt-decode": "^4.0.0",

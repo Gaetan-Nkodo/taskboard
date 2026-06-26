@@ -44,6 +44,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ForgotPasswordHandler>();
         services.AddScoped<ResetPasswordHandler>();
         services.AddScoped<ChangePasswordHandler>();
+        services.AddScoped<GetTasksByBoardHandler>();
+        services.AddScoped<MoveTaskHandler>();
 
         // Validators
         services.AddValidatorsFromAssembly(typeof(CreateBoardRequestValidator).Assembly);

@@ -1,46 +1,10 @@
-import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { setupServer } from "msw/node";
-import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { BoardsPage } from "../BoardsPage";
 import { TestProviders } from "@/tests/TestProviders";
-
-// Mock data
-let boards = [
-  { id: "1", name: "Board A", description: "Desc A", columns: [] },
-  { id: "2", name: "Board B", description: "Desc B", columns: [] },
-];
-
-// MSW server
-const server = setupServer(
-  http.get(`${import.meta.env.VITE_API_URL}/api/v1/boards`, () => {
-    return HttpResponse.json(boards);
-  }),
-
-  http.get(`${import.meta.env.VITE_API_URL}/api/v1/boards/:id`, ({ params }) => {
-    const board = boards.find((b) => b.id === params.id);
-    if (!board) {
-      return HttpResponse.json({ message: "Not found" }, { status: 404 });
-    }
-    return HttpResponse.json(board);
-  })
-);
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
-beforeEach(() => {
-  localStorage.setItem("accessToken", "abc123");
-  localStorage.setItem("refreshToken", "ref123");
-  localStorage.setItem("user", JSON.stringify({ id: "1", email: "test@test.com" }));
-
-  boards = [
-    { id: "1", name: "Board A", description: "Desc A", columns: [] },
-    { id: "2", name: "Board B", description: "Desc B", columns: [] },
-  ];
-});
+import { server } from "@/tests/msw-server";
+import { http, HttpResponse } from "msw";
 
 const renderPage = () =>
   render(
@@ -53,6 +17,18 @@ const renderPage = () =>
     </MemoryRouter>
   );
 
+beforeEach(() => {
+  localStorage.setItem("accessToken", "abc123");
+  localStorage.setItem("refreshToken", "ref123");
+  localStorage.setItem("user", JSON.stringify({ id: "1", email: "test@test.com" }));
+});
+
+const urls = (path: string) => [
+  path,
+  `http://localhost${path}`,
+  `http://localhost:3000${path}`,
+];
+
 describe("BoardsPage - Integration", () => {
   it("charge et affiche la liste des boards", async () => {
     renderPage();
@@ -62,10 +38,14 @@ describe("BoardsPage - Integration", () => {
   });
 
   it("affiche un message si aucun board n'existe", async () => {
-    boards = [];
+    server.use(
+      ...urls("/api/v1/boards").map(url =>
+        http.get(url, () => HttpResponse.json([]))
+      )
+    );
 
     renderPage();
 
-    expect(await screen.findByText(/aucun board/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Aucun board/i)).toBeInTheDocument();
   });
 });

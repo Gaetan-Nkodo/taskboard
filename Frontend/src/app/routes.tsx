@@ -10,6 +10,7 @@ import { BoardsPage } from "@/features/boards/pages/BoardsPage";
 
 import { Layout } from "@/components/layout/Layout";
 import { BoardDetailsPage } from "@/features/boards/pages/BoardDetailsPage";
+import { TasksPage } from "@/features/tasks/pages/TasksPage";
 
 export const router = createBrowserRouter([
   // --- Pages publiques ---
@@ -29,7 +30,8 @@ export const router = createBrowserRouter([
       { index: true, element: <BoardsPage /> },
       { path: "boards", element: <BoardsPage /> },
       { path: "boards/:id", element: <BoardDetailsPage  /> },
-      { path: "change-password", element: <ChangePasswordPage /> }
+      { path: "change-password", element: <ChangePasswordPage /> },
+      { path: "tasks", element: <TasksPage /> }
     ]
   }
 ]);
