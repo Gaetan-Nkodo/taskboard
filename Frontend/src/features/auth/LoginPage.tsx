@@ -40,7 +40,14 @@ export default function LoginPage() {
       login(result);
       navigate(from);
     } catch (err: unknown) {
+
       const msg = err instanceof Error ? err.message : String(err) ?? "Erreur de connexion";
+      const status = (err as { status?: number }).status;
+      if (msg.includes("Email not confirmed") || status === 403) {
+          setError("Veuillez confirmer votre email avant de vous connecter.");
+          navigate("/confirm-your-email");
+          return;
+      }
       setError(msg);
     } finally {
       setLoading(false);

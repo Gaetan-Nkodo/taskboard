@@ -5,6 +5,7 @@ using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Boards;
 using TaskBoard.Application.UseCases.Tasks;
 using TaskBoard.Application.UseCases.Users;
+using TaskBoard.Application.UserCases.Users;
 using TaskBoard.Domain.Interfaces;
 using TaskBoard.Infrastructure.Persistance.Repositories;
 using TaskBoard.Infrastructure.Persistence.Repositories;
@@ -47,7 +48,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ResetPasswordHandler>();
         services.AddScoped<ChangePasswordHandler>();
         services.AddScoped<GetTasksByBoardHandler>();
+        services.AddScoped<ResendConfirmationEmailHandler>();
         services.AddScoped<MoveTaskHandler>();
+        services.AddScoped<ConfirmEmailHandler>();
 
         // Validators
         services.AddValidatorsFromAssembly(typeof(CreateBoardRequestValidator).Assembly);

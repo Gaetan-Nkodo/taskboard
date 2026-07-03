@@ -27,4 +27,12 @@ public class EmailVerificationTokenRepository : IEmailVerificationTokenRepositor
         _db.EmailVerificationTokens.Remove(token);
         await _db.SaveChangesAsync(ct);
     }
+
+    public async Task<EmailVerificationToken?> GetLatestForUserAsync(Guid userId, CancellationToken ct = default)
+    {
+        return await _db.EmailVerificationTokens
+            .Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.ExpiresAt)
+            .FirstOrDefaultAsync(ct);
+    }
 }

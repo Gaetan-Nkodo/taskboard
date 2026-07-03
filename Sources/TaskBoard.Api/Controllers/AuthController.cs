@@ -57,6 +57,10 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { error = "Invalid credentials" });
         }
+        catch (EmailNotConfirmedException)
+        {
+            return StatusCode(403, new { error = "Email not confirmed" });
+        }
         catch (AccountDisabledException)
         {
             return StatusCode(403, new { error = "Account disabled" });
@@ -142,5 +146,15 @@ public class AuthController : ControllerBase
         await handler.Handle(token, ct);
         return Ok(new { message = "Email confirmed" });
     }
+
+    [HttpPost("resend-confirmation")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationRequest request)
+    {
+        var handler = HttpContext.RequestServices.GetRequiredService<ResendConfirmationEmailHandler>();
+        await handler.Handle(request.Email);
+        return Ok(new { message = "Confirmation email resent." });
+    }
+
 
 }

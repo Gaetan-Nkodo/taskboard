@@ -9,6 +9,8 @@ using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
 
+namespace TaskBoard.Application.Tests.Users;
+
 public class ResetPasswordHandlerTests
 {
     private readonly IPasswordResetTokenRepository _tokens = Substitute.For<IPasswordResetTokenRepository>();

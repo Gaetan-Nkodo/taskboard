@@ -4,8 +4,11 @@ using NSubstitute;
 
 using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Users;
+using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
+
+namespace TaskBoard.Application.Tests.Users;
 
 public class LoginUserHandlerTests
 {
@@ -24,6 +27,9 @@ public class LoginUserHandlerTests
         var request = new LoginUserRequest("user@example.com", "P@ssw0rd!");
         var user = new User("user@example.com", "hashed", "Test User");
 
+        // 🔥 Email doit être confirmé maintenant
+        user.ConfirmEmail();
+
         _users.GetByEmailAsync(request.Email).Returns(user);
         _hasher.Verify(request.Password, user.PasswordHash).Returns(true);
 
@@ -38,7 +44,6 @@ public class LoginUserHandlerTests
         result.RefreshToken.Should().Be("REFRESH_TOKEN");
         result.User.Email.Should().Be("user@example.com");
 
-        // 🔥 Vérifie que la transaction est commit
         await _uow.Received(1).SaveChangesAsync();
     }
 
@@ -55,7 +60,6 @@ public class LoginUserHandlerTests
 
         await act.Should().ThrowAsync<InvalidCredentialsException>();
 
-        // 🔥 Aucun commit ne doit être fait
         await _uow.DidNotReceive().SaveChangesAsync();
     }
 
@@ -64,6 +68,9 @@ public class LoginUserHandlerTests
     {
         var request = new LoginUserRequest("user@example.com", "wrong");
         var user = new User("user@example.com", "hashed", "Test User");
+
+        // 🔥 Email confirmé pour ce test
+        user.ConfirmEmail();
 
         _users.GetByEmailAsync(request.Email).Returns(user);
         _hasher.Verify(request.Password, user.PasswordHash).Returns(false);
@@ -74,7 +81,27 @@ public class LoginUserHandlerTests
 
         await act.Should().ThrowAsync<InvalidCredentialsException>();
 
-        // 🔥 Aucun commit ne doit être fait
+        await _uow.DidNotReceive().SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenEmailNotConfirmed()
+    {
+        var request = new LoginUserRequest("user@example.com", "P@ssw0rd!");
+        var user = new User("user@example.com", "hashed", "Test User");
+
+        // ❌ Email NON confirmé
+        // user.ConfirmEmail();  <-- volontairement absent
+
+        _users.GetByEmailAsync(request.Email).Returns(user);
+        _hasher.Verify(request.Password, user.PasswordHash).Returns(true);
+
+        var handler = CreateHandler();
+
+        var act = () => handler.Handle(request);
+
+        await act.Should().ThrowAsync<EmailNotConfirmedException>();
+
         await _uow.DidNotReceive().SaveChangesAsync();
     }
 }

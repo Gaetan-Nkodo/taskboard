@@ -35,6 +35,9 @@ public class LoginUserHandler : ILoginUserHandler
         if (user == null)
             throw new InvalidCredentialsException();
 
+        if (!user.EmailConfirmed)
+            throw new EmailNotConfirmedException();
+
         if (!_hasher.Verify(request.Password, user.PasswordHash))
             throw new InvalidCredentialsException();
 

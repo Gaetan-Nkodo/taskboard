@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useApiClient } from "@/core/api/apiClient";
 import { useAuthContext } from "@/features/auth/AuthProvider";
 
-export default function ConfirmEmailSentPage() {
+export default function ConfirmYourEmailPage() {
   const api = useApiClient();
   const { user } = useAuthContext();
-
   const [status, setStatus] = useState<"idle" | "sent" | "error">("idle");
 
   async function resend() {
@@ -23,16 +22,15 @@ export default function ConfirmEmailSentPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 animate-fadeIn">
-      <Card className="w-full max-w-md p-6 shadow-xl border border-border/40 bg-card/80 backdrop-blur-md">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <Card className="w-full max-w-md p-6 shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl font-bold">Vérifiez votre email</CardTitle>
+          <CardTitle className="text-xl font-bold">Email non confirmé</CardTitle>
         </CardHeader>
 
         <CardContent className="text-center space-y-4">
           <p className="text-muted-foreground">
-            Un lien de confirmation vous a été envoyé.
-            Cliquez dessus pour activer votre compte.
+            Vous devez confirmer votre email avant de pouvoir vous connecter.
           </p>
 
           {status === "sent" && (
@@ -47,10 +45,7 @@ export default function ConfirmEmailSentPage() {
             Renvoyer l’email de confirmation
           </Button>
 
-          <Link
-            to="/login"
-            className="text-primary hover:underline text-sm block mt-2"
-          >
+          <Link to="/login" className="text-primary hover:underline text-sm">
             Retour à la connexion
           </Link>
         </CardContent>

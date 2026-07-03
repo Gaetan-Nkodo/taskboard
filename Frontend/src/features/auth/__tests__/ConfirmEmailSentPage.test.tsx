@@ -1,14 +1,16 @@
 import { render, screen } from "@testing-library/react";
-import ConfirmEmailSentPage from "../ConfirmEmailSentPage";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { AuthProvider } from "@/features/auth/AuthProvider";
+import ConfirmEmailSentPage from "../ConfirmEmailSentPage";
 
 describe("ConfirmEmailSentPage", () => {
-  it("affiche le message et le lien vers login", () => {
+  test("affiche le message et le lien vers login", () => {
     render(
-      <MemoryRouter initialEntries={["/confirm-email-sent"]}>
-        <ConfirmEmailSentPage />
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter>
+          <ConfirmEmailSentPage />
+        </MemoryRouter>
+      </AuthProvider>
     );
 
     expect(
