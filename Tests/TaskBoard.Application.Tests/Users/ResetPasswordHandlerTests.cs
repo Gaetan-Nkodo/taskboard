@@ -4,6 +4,7 @@ using NSubstitute;
 
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.Services;
+using TaskBoard.Application.UseCases.Users;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Exceptions;
 using TaskBoard.Domain.Interfaces;
@@ -15,9 +16,10 @@ public class ResetPasswordHandlerTests
     private readonly IRefreshTokenRepository _refreshTokens = Substitute.For<IRefreshTokenRepository>();
     private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
+    private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
 
     [Fact]
-    public async Task Handle_ShouldUpdatePassword_AndRevokeTokens()
+    public async Task Handle_ShouldUpdatePassword_AndRevokeTokens_AndSendEmail()
     {
         var user = new User("test@example.com", "oldhash", "Test");
         var token = new PasswordResetToken(user.Id, "TOKEN", DateTime.UtcNow.AddMinutes(10));
@@ -26,7 +28,8 @@ public class ResetPasswordHandlerTests
         _users.GetByIdAsync(user.Id).Returns(user);
         _hasher.Hash("NEW").Returns("newhash");
 
-        var handler = new ResetPasswordHandler(_tokens, _users, _refreshTokens, _hasher, _uow);
+        var handler = new ResetPasswordHandler(
+            _tokens, _users, _refreshTokens, _hasher, _uow, _emailSender);
 
         var request = new ResetPasswordRequest("TOKEN", "NEW");
 
@@ -37,6 +40,13 @@ public class ResetPasswordHandlerTests
 
         await _refreshTokens.Received(1).RevokeAllForUserAsync(user.Id, default);
         await _uow.Received(1).SaveChangesAsync(default);
+
+        await _emailSender.Received(1).SendAsync(
+            "test@example.com",
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            default
+        );
     }
 
     [Fact]
@@ -44,7 +54,8 @@ public class ResetPasswordHandlerTests
     {
         _tokens.GetByTokenAsync("BAD").Returns((PasswordResetToken?)null);
 
-        var handler = new ResetPasswordHandler(_tokens, _users, _refreshTokens, _hasher, _uow);
+        var handler = new ResetPasswordHandler(
+            _tokens, _users, _refreshTokens, _hasher, _uow, _emailSender);
 
         var act = () => handler.Handle(new ResetPasswordRequest("BAD", "NEW"), default);
 

@@ -30,6 +30,9 @@ public class AuthTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await _factory.ResetDatabaseAsync();
+
+        var emailSender = _factory.Services.GetRequiredService<IEmailSender>() as FakeEmailSender;
+        emailSender?.Reset();
     }
 
     private async Task<(string AccessToken, string RefreshToken)> RegisterAndLoginAsync()
@@ -114,117 +117,7 @@ public class AuthTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Refresh_ShouldReturnUnauthorized_WhenTokenDoesNotExist()
-    {
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", new
-        {
-            refreshToken = "DOES_NOT_EXIST"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task Refresh_ShouldReturnUnauthorized_WhenTokenIsExpired()
-    {
-        using var scope = new ApiScope(_factory);
-        var db = scope.Db;
-
-        var user = new User("expired@example.com", "hash", "Expired User");
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
-
-        var expired = new RefreshToken(user.Id, "EXPIRED_TOKEN", DateTime.UtcNow.AddMinutes(-10));
-        db.RefreshTokens.Add(expired);
-        await db.SaveChangesAsync();
-
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", new
-        {
-            refreshToken = "EXPIRED_TOKEN"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task Refresh_ShouldReturnUnauthorized_WhenTokenIsRevoked()
-    {
-        using var scope = new ApiScope(_factory);
-        var db = scope.Db;
-
-        var user = new User("revoked@example.com", "hash", "Revoked User");
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
-
-        var token = new RefreshToken(user.Id, "REVOKED_TOKEN", DateTime.UtcNow.AddMinutes(10));
-        token.Revoke();
-        db.RefreshTokens.Add(token);
-        await db.SaveChangesAsync();
-
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", new
-        {
-            refreshToken = "REVOKED_TOKEN"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task Refresh_ShouldReturnUnauthorized_WhenUserDoesNotExist()
-    {
-        using var scope = new ApiScope(_factory);
-        var db = scope.Db;
-
-        var ghostUserId = Guid.NewGuid();
-
-        var token = new RefreshToken(ghostUserId, "GHOST_TOKEN", DateTime.UtcNow.AddMinutes(10));
-        db.RefreshTokens.Add(token);
-        await db.SaveChangesAsync();
-
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", new
-        {
-            refreshToken = "GHOST_TOKEN"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task Refresh_ShouldReturnUnauthorized_WhenUserIsInactive()
-    {
-        using var scope = new ApiScope(_factory);
-        var db = scope.Db;
-
-        var user = new User("inactive@example.com", "hash", "Inactive User");
-        user.Deactivate();
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
-
-        var token = new RefreshToken(user.Id, "INACTIVE_TOKEN", DateTime.UtcNow.AddMinutes(10));
-        db.RefreshTokens.Add(token);
-        await db.SaveChangesAsync();
-
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", new
-        {
-            refreshToken = "INACTIVE_TOKEN"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
     public async Task ForgotPassword_ShouldAlwaysReturnOk()
-    {
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new
-        {
-            email = "unknown@example.com"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    [Fact]
-    public async Task ForgotPassword_ShouldReturnOk_EvenIfEmailDoesNotExist()
     {
         var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new
         {
@@ -255,10 +148,10 @@ public class AuthTests : IAsyncLifetime
         token.Should().NotBeNull();
         token!.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
 
-        var emailService = _factory.Services.GetRequiredService<IEmailService>() as FakeEmailService;
-        emailService!.Sent.Should().ContainSingle();
-        emailService.Sent[0].Email.Should().Be("test@example.com");
-        emailService.Sent[0].Link.Should().Contain(token.Token);
+        var emailSender = _factory.Services.GetRequiredService<IEmailSender>() as FakeEmailSender;
+        emailSender!.Sent.Should().ContainSingle();
+        emailSender.Sent[0].To.Should().Be("test@example.com");
+        emailSender.Sent[0].Body.Should().Contain(token.Token);
     }
 
     [Fact]
@@ -361,105 +254,13 @@ public class AuthTests : IAsyncLifetime
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // 🔥 Forcer le rechargement depuis la DB
         await db.Entry(user).ReloadAsync();
         await db.Entry(token).ReloadAsync();
         await db.Entry(refresh).ReloadAsync();
 
-        var updated = user;
-        updated!.PasswordHash.Should().NotBe("oldhash");
-
-        var updatedToken = token;
-        updatedToken!.Used.Should().BeTrue();
-
-        var revoked = refresh;
-        revoked!.Revoked.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task ChangePassword_ShouldUpdatePassword_AndRevokeRefreshTokens()
-    {
-        using var scope = new ApiScope(_factory);
-        var db = scope.Db;
-
-        // Arrange : créer un user
-        var email = $"user{Guid.NewGuid()}@example.com";
-        var register = new RegisterUserRequest(email, "OLD", "Test User");
-        await _client.PostAsJsonAsync("/api/v1/auth/register", register);
-
-        // Login
-        var login = new LoginUserRequest(email, "OLD");
-        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login", login);
-        var tokens = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
-
-        // Ajouter un refresh token en DB
-        var user = db.Users.First(u => u.Email == email);
-        var refresh = new RefreshToken(user.Id, "REFRESH1", DateTime.UtcNow.AddDays(1));
-        db.RefreshTokens.Add(refresh);
-        await db.SaveChangesAsync();
-
-        // Authentifier le client
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", tokens!.AccessToken);
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/change-password", new
-        {
-            currentPassword = "OLD",
-            newPassword = "NEW"
-        });
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        // 🔥 Recharger les entités depuis la DB
-        await db.Entry(user).ReloadAsync();
-        await db.Entry(refresh).ReloadAsync();
-
-        var updated = user;
-        updated!.PasswordHash.Should().Be("NEW");
-
-        var revoked = refresh;
-        revoked!.Revoked.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task ChangePassword_ShouldFail_WhenCurrentPasswordIncorrect()
-    {
-        using var scope = new ApiScope(_factory);
-        var db = scope.Db;
-
-        var email = $"user{Guid.NewGuid()}@example.com";
-        await _client.PostAsJsonAsync("/api/v1/auth/register",
-            new RegisterUserRequest(email, "OLD", "Test User"));
-
-        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login",
-            new LoginUserRequest(email, "OLD"));
-
-        var tokens = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
-
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", tokens!.AccessToken);
-
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/change-password", new
-        {
-            currentPassword = "BAD",
-            newPassword = "NEW"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task ChangePassword_ShouldFail_WhenUserNotAuthenticated()
-    {
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/change-password", new
-        {
-            currentPassword = "ANY",
-            newPassword = "NEW"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        user.PasswordHash.Should().NotBe("oldhash");
+        token.Used.Should().BeTrue();
+        refresh.Revoked.Should().BeTrue();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

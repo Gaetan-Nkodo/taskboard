@@ -5,8 +5,8 @@ public class User
     public string Email { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
     public string DisplayName { get; private set; } = default!;
-
     public bool IsActive { get; private set; } = true;
+    public bool EmailConfirmed { get; private set; } = false;
 
     private User() { } // EF Core
 
@@ -24,4 +24,5 @@ public class User
     {
         PasswordHash = newHash;
     }
+    public void ConfirmEmail() => EmailConfirmed = true;
 }

@@ -23,7 +23,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 🔥 IMPORTANT : le login NE DOIT PAS passer par useHttp()
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
         {
@@ -38,11 +37,7 @@ export default function LoginPage() {
       }
 
       const result: LoginResponse = await response.json();
-
-      // 🔥 Mise à jour du contexte AuthProvider
       login(result);
-
-      // 🔥 Redirection vers la page d’origine
       navigate(from);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err) ?? "Erreur de connexion";
@@ -54,7 +49,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md p-6 relative">
         <h1 className="text-2xl font-bold mb-6 text-center">Connexion</h1>
 
         {error && (
@@ -100,12 +95,20 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-4 text-center">
+        {/* 🔥 Liens en bas gauche et bas droite */}
+        <div className="mt-6 flex justify-between text-sm">
           <a
             href="/forgot-password"
-            className="text-sm text-blue-600 hover:underline"
+            className="text-blue-600 hover:underline"
           >
             Mot de passe oublié ?
+          </a>
+
+          <a
+            href="/register"
+            className="text-primary hover:underline"
+          >
+            Créer un compte
           </a>
         </div>
       </Card>

@@ -7,6 +7,7 @@ using TaskBoard.Api.Extensions;
 using TaskBoard.Application.DTOs;
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.UseCases.Users;
+using TaskBoard.Application.UserCases.Users;
 using TaskBoard.Domain.Exceptions;
 
 namespace TaskBoard.Api.Controllers;
@@ -132,4 +133,14 @@ public class AuthController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpGet("confirm-email")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string token, CancellationToken ct)
+    {
+        var handler = HttpContext.RequestServices.GetRequiredService<ConfirmEmailHandler>();
+        await handler.Handle(token, ct);
+        return Ok(new { message = "Email confirmed" });
+    }
+
 }

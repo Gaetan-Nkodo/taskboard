@@ -50,7 +50,7 @@ export function BoardsPage() {
         </h1>
 
         <button
-          className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+          className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 relative z-[70]"
           onClick={() => setShowCreate(true)}
         >
           Nouveau board

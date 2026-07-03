@@ -4,6 +4,9 @@ import LoginPage from "@/features/auth/LoginPage";
 import ForgotPasswordPage from "@/features/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/features/auth/ResetPasswordPage";
 import { ChangePasswordPage } from "@/features/auth/ChangePasswordPage";
+import RegisterPage from "@/features/auth/RegisterPage";
+import ConfirmEmailPage from "@/features/auth/ConfirmEmailPage";
+import ConfirmEmailSentPage from "@/features/auth/ConfirmEmailSentPage";
 
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute";
 import { BoardsPage } from "@/features/boards/pages/BoardsPage";
@@ -15,6 +18,9 @@ import { TasksPage } from "@/features/tasks/pages/TasksPage";
 export const router = createBrowserRouter([
   // --- Pages publiques ---
   { path: "/login", element: <LoginPage /> },
+  { path: "/register", element: <RegisterPage /> },
+  { path: "/confirm-email", element: <ConfirmEmailPage /> },
+  { path: "/confirm-email-sent", element: <ConfirmEmailSentPage /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
 

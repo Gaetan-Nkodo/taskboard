@@ -9,6 +9,7 @@ using TaskBoard.Api.Tests.Utils;
 using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Users;
 using TaskBoard.Domain.Interfaces;
+using TaskBoard.Infrastructure.Persistance.Repositories;
 using TaskBoard.Infrastructure.Persistence;
 using TaskBoard.Infrastructure.Persistence.Repositories;
 using TaskBoard.Infrastructure.Security;
@@ -73,17 +74,13 @@ public class ApiFactory : WebApplicationFactory<Program>
                 o.HttpsPort = null;
             });
 
-            // 🔥 UTILISER LE VRAI TOKEN SERVICE
+            // TOKEN SERVICE
             services.RemoveAll<ITokenService>();
             services.AddScoped<ITokenService, JwtTokenService>();
 
             // PASSWORD HASHER FAKE
             services.RemoveAll<IPasswordHasher>();
             services.AddSingleton<IPasswordHasher, FakePasswordHasher>();
-
-            // EMAIL SERVICE FAKE
-            services.RemoveAll<IEmailService>();
-            services.AddSingleton<IEmailService, FakeEmailService>();
 
             // REPOSITORIES
             services.RemoveAll<IUserRepository>();
@@ -95,9 +92,16 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IPasswordResetTokenRepository>();
             services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
-            // 🔥 UNIT OF WORK
+            services.RemoveAll<IEmailVerificationTokenRepository>();
+            services.AddScoped<IEmailVerificationTokenRepository, EmailVerificationTokenRepository>();
+
+            // UNIT OF WORK
             services.RemoveAll<IUnitOfWork>();
             services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+            // EMAIL SENDER → remplacer Mailjet par FakeEmailSender
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender, FakeEmailSender>();
 
             // HANDLERS
             services.RemoveAll<IRegisterUserHandler>();

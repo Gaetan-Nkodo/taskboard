@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
+  emailConfirmed?: boolean;
 
   role?: "user" | "admin" | "owner";
   avatarUrl?: string;
