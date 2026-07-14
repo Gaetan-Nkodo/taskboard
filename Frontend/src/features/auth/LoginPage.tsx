@@ -45,7 +45,8 @@ export default function LoginPage() {
       const status = (err as { status?: number }).status;
       if (msg.includes("Email not confirmed") || status === 403) {
           setError("Veuillez confirmer votre email avant de vous connecter.");
-          navigate("/confirm-your-email");
+          localStorage.setItem("pendingEmail", email);
+          navigate("/confirm-email-sent");
           return;
       }
       setError(msg);

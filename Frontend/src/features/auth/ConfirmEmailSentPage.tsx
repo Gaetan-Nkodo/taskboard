@@ -12,10 +12,14 @@ export default function ConfirmEmailSentPage() {
   const [status, setStatus] = useState<"idle" | "sent" | "error">("idle");
 
   async function resend() {
+    const email = localStorage.getItem("pendingEmail");
+    if (!email) {
+      setStatus("error");
+      return;
+    }
+
     try {
-      await api.post("/api/v1/auth/resend-confirmation", {
-        email: user?.email
-      });
+      await api.post("/api/v1/auth/resend-confirmation", {email});
       setStatus("sent");
     } catch {
       setStatus("error");

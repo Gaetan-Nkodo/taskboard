@@ -14,7 +14,6 @@ import { BoardsPage } from "@/features/boards/pages/BoardsPage";
 import { Layout } from "@/components/layout/Layout";
 import { BoardDetailsPage } from "@/features/boards/pages/BoardDetailsPage";
 import { TasksPage } from "@/features/tasks/pages/TasksPage";
-import ConfirmYourEmailPage from "@/features/auth/ConfirmYourEmailPage";
 
 export const router = createBrowserRouter([
   // --- Pages publiques ---
@@ -22,7 +21,6 @@ export const router = createBrowserRouter([
   { path: "/register", element: <RegisterPage /> },
   { path: "/confirm-email", element: <ConfirmEmailPage /> },
   { path: "/confirm-email-sent", element: <ConfirmEmailSentPage /> },
-  { path: "/confirm-your-email", element: <ConfirmYourEmailPage /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
 
