@@ -11,30 +11,38 @@ using TaskBoard.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Désactive le remappage automatique des claims
+// 🔥 Désactive le remappage automatique des claims
 JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
+// 🔥 Logging minimal avant Serilog
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// Chargement de la configuration (inclut appsettings.Development.json)
-builder.AddCustomConfiguration();
+// 🔥 Charger la configuration multi‑environnements
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
 
-// Serilog
+// 🔥 Serilog (après configuration)
 builder.Host.AddCustomSerilog();
 
 // 🔥 Charger EmailSettings AVANT AddCustomServices
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 
-// Services
+// 🔥 Services applicatifs
 builder.Services.AddCustomServices();
 builder.Services.AddCustomSwagger();
 builder.Services.AddControllers();
+
+// 🔥 CORS multi‑environnements
 builder.Services.AddCustomCors(builder.Configuration);
+
+// 🔥 Base de données multi‑environnements
 builder.Services.AddCustomDatabase(builder.Configuration);
 
-// Auth
+// 🔥 Auth (JWT)
 builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
 
 // 🔥 Choix du sender selon l'environnement
@@ -47,41 +55,42 @@ else
     builder.Services.AddScoped<IEmailSender, MailjetEmailSender>();
 }
 
-// Health checks
+// 🔥 Health checks
 builder.Services.AddCustomHealthChecks(builder.Configuration);
 
 var app = builder.Build();
 
+// 🔥 Serilog request logging
 app.UseSerilogRequestLogging();
 
-// Routing
+// 🔥 Routing
 app.UseRouting();
 
-// Middlewares custom
+// 🔥 Middlewares custom
 app.UseCustomMiddlewares();
 
-// CORS
+// 🔥 CORS (AVANT Auth)
 app.UseCustomCors();
 
-// Auth
+// 🔥 Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Swagger uniquement en dev
+// 🔥 Swagger uniquement en dev
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Health checks
+// 🔥 Health checks
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
-// Endpoints
+// 🔥 Endpoints
 app.MapControllers();
 
-// Seed
+// 🔥 Seed DB
 await DatabaseSeeder.SeedAsync(app.Services);
 
 // 🔥 Endpoint debug email (uniquement en dev)
