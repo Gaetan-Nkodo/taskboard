@@ -25,7 +25,7 @@ services:
       POSTGRES_PASSWORD: StrongPassword123!
       POSTGRES_DB: TaskBoard
     ports:
-      - "5432:5432"
+      - "5432:5432"   # OK en local pour accéder via PGAdmin / DBeaver
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -42,13 +42,38 @@ services:
       - seq
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TaskBoard;Username=taskboard;Password=StrongPassword123!"
+
+      # LOCAL DATABASE (Docker → Host=db)
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=TaskBoard;Username=taskboard;Password=StrongPassword123!"
+
+      # JWT
       Jwt__Key: "SuperSecretKeyForJwt123!"
       Jwt__Issuer: "TaskBoard"
       Jwt__Audience: "TaskBoardUsers"
+
+      # Seq logs
       Serilog__WriteTo__1__Args__serverUrl: "http://seq"
+
+      # LOCAL EMAIL MODE (Mailpit)
+      Email__Mode: "Smtp"
+      Email__Host: "mailpit"
+      Email__Port: "1025"
+      Email__From: "noreply@localhost"
+
+      # FRONTEND LOCAL
+      Frontend__BaseUrl: "http://localhost:5173"
     ports:
       - "8080:8080"
+    networks:
+      - taskboard-net
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
     networks:
       - taskboard-net
 

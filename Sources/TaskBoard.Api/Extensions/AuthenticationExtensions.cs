@@ -14,7 +14,6 @@ public static class AuthenticationExtensions
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                // 🔥 IMPORTANT : en tests, HTTPS n'est PAS utilisé
                 options.RequireHttpsMetadata = env.IsProduction() == true ? true : false;
 
                 options.SaveToken = true;

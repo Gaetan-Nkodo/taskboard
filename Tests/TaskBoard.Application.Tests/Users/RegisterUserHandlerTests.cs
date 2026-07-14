@@ -1,6 +1,7 @@
 using FluentAssertions;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using NSubstitute;
 
@@ -21,11 +22,14 @@ public class RegisterUserHandlerTests
     private readonly IEmailVerificationTokenRepository _tokens = Substitute.For<IEmailVerificationTokenRepository>();
     private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
     private readonly IConfiguration _config;
+    private readonly ILogger<RegisterUserHandler> _logger;
 
     public RegisterUserHandlerTests()
     {
         _config = Substitute.For<IConfiguration>();
-        _config["Frontend:BaseUrl"].Returns("https://taskboard.app");
+        _config["Frontend:BaseUrl"].Returns("https://taskboard.app/");
+
+        _logger = Substitute.For<ILogger<RegisterUserHandler>>();
     }
 
     [Fact]
@@ -40,7 +44,14 @@ public class RegisterUserHandlerTests
         _users.GetByEmailAsync(request.Email).Returns((User?)null);
         _hasher.Hash(request.Password).Returns("HASHED");
 
-        var handler = new RegisterUserHandler(_users, _hasher, _tokens, _emailSender, _config);
+        var handler = new RegisterUserHandler(
+            _users,
+            _hasher,
+            _tokens,
+            _emailSender,
+            _config,
+            _logger
+        );
 
         var result = await handler.Handle(request);
 
@@ -48,11 +59,11 @@ public class RegisterUserHandlerTests
 
         await _users.Received(1).AddAsync(Arg.Any<User>());
         await _tokens.Received(1).AddAsync(Arg.Any<EmailVerificationToken>());
+
         await _emailSender.Received(1).SendAsync(
             "new@example.com",
             Arg.Any<string>(),
-            Arg.Any<string>(),
-            default
+            Arg.Any<string>()
         );
     }
 
@@ -68,7 +79,14 @@ public class RegisterUserHandlerTests
         _users.GetByEmailAsync(request.Email)
               .Returns(new User("exists@example.com", "hash", "Existing"));
 
-        var handler = new RegisterUserHandler(_users, _hasher, _tokens, _emailSender, _config);
+        var handler = new RegisterUserHandler(
+            _users,
+            _hasher,
+            _tokens,
+            _emailSender,
+            _config,
+            _logger
+        );
 
         var act = () => handler.Handle(request);
 

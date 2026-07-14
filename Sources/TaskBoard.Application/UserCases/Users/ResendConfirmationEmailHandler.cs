@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
+using TaskBoard.Application.Common;
 using TaskBoard.Application.Common.Emails;
 using TaskBoard.Application.Services;
 using TaskBoard.Domain.Entities;
@@ -11,22 +13,29 @@ public class ResendConfirmationEmailHandler
     private readonly IUserRepository _users;
     private readonly IEmailVerificationTokenRepository _tokens;
     private readonly IEmailSender _emailSender;
+    private readonly ILogger<ResendConfirmationEmailHandler> _logger;
     private readonly string _frontendUrl;
 
     public ResendConfirmationEmailHandler(
         IUserRepository users,
         IEmailVerificationTokenRepository tokens,
         IEmailSender emailSender,
-        IConfiguration config)
+        IConfiguration config,
+        ILogger<ResendConfirmationEmailHandler> logger)
     {
         _users = users;
         _tokens = tokens;
         _emailSender = emailSender;
-        _frontendUrl = config["Frontend:BaseUrl"] ?? "https://taskboard.app";
+        _logger = logger;
+
+        _frontendUrl = FrontendUrlHelper.GetNormalizedFrontendUrl(config);
     }
 
     public async Task Handle(string email)
     {
+        if (string.IsNullOrWhiteSpace(email))
+            throw new DomainException("Email is required.");
+
         var user = await _users.GetByEmailAsync(email);
         if (user == null)
             throw new DomainException("User not found.");
@@ -34,13 +43,16 @@ public class ResendConfirmationEmailHandler
         if (user.EmailConfirmed)
             throw new DomainException("Email already confirmed.");
 
-        // Vérifier si un token existe déjà
         var existingToken = await _tokens.GetLatestForUserAsync(user.Id);
         string tokenValue;
 
         if (existingToken != null && !existingToken.IsExpired())
         {
             tokenValue = existingToken.Token;
+            _logger.LogInformation(
+                "Reusing existing confirmation token for user {UserId}",
+                user.Id
+            );
         }
         else
         {
@@ -51,15 +63,39 @@ public class ResendConfirmationEmailHandler
                 DateTime.UtcNow.AddHours(24)
             );
             await _tokens.AddAsync(newToken);
+
+            _logger.LogInformation(
+                "Generated new confirmation token for user {UserId}",
+                user.Id
+            );
         }
 
         var confirmUrl = $"{_frontendUrl}/confirm-email?token={tokenValue}";
         var body = EmailTemplates.ConfirmEmail(user.DisplayName, confirmUrl);
 
-        await _emailSender.SendAsync(
-            user.Email,
-            "Confirme ton email",
-            body
-        );
+        try
+        {
+            await _emailSender.SendAsync(
+                user.Email,
+                "Confirme ton email",
+                body
+            );
+
+            _logger.LogInformation(
+                "Resent confirmation email to {Email} with token {Token}",
+                user.Email,
+                tokenValue
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to resend confirmation email to {Email}",
+                user.Email
+            );
+
+            throw new DomainException("Failed to resend confirmation email. Please try again later.");
+        }
     }
 }
