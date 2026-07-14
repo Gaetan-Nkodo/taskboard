@@ -1,5 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 
+using Mailjet.Client;
+using Mailjet.Client.Resources;
+
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -106,7 +110,16 @@ if (app.Environment.IsDevelopment())
         var html = File.ReadAllText(path);
         return Results.Content(html, "text/html");
     });
+} else {
+    app.MapGet("/debug/mailjet", async () =>
+    {
+        var client = new MailjetClient("5145d6c1d9e4de06aea1dfc2f0b91aa7", "6849e2c62820bd737bc1f45986be9081");
+        var request = new MailjetRequest { Resource = Message.Resource };
+        var response = await client.GetAsync(request);
+        return Results.Json(response.GetData());
+    });
 }
+
 
 app.Run();
 
