@@ -39,8 +39,10 @@
   </ItemGroup>
 
     <ItemGroup>
-        <None Update="appsettings.Production.json" CopyToOutputDirectory="Always" />
+        <None Update="appsettings.json" CopyToOutputDirectory="Always" />
         <None Update="appsettings.Development.json" CopyToOutputDirectory="Always" />
+        <None Update="appsettings.Staging.json" CopyToOutputDirectory="Always" />
+        <None Update="appsettings.Production.json" CopyToOutputDirectory="Always" />
         <None Update="appsettings.Test.json" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
