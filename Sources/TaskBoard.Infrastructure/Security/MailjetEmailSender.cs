@@ -31,7 +31,7 @@ public class MailjetEmailSender : IEmailSender
     {
         var request = new MailjetRequest
         {
-            Resource = Send.Resource
+            Resource = SendV31.Resource
         }
         .Property(Send.Messages, new JArray {
             new JObject {
@@ -41,7 +41,7 @@ public class MailjetEmailSender : IEmailSender
                 }},
                 { "Subject", subject },
                 { "TextPart", "Merci d'utiliser TaskBoard." },
-                { "HTMLPart", "<p>Test</p>" }
+                { "HTMLPart", body }
             }
         });
 
