@@ -19,7 +19,7 @@ public class MailjetEmailSender : IEmailSender
     {
         var apiKey = config["Email:ApiKey"];
         var apiSecret = config["Email:ApiSecret"];
-        _from = config["Email:From"] ?? "gaetannkodo@gmail.com";
+        _from = config["Email:From"] ?? "noreply@taskboard.cc";
 
         if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(apiSecret))
             throw new InvalidOperationException("Mailjet API credentials missing.");
