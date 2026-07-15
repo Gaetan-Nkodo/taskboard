@@ -41,7 +41,7 @@ public class MailjetEmailSender : IEmailSender
                 }},
                 { "Subject", subject },
                 { "TextPart", "Merci d'utiliser TaskBoard." },
-                { "HTMLPart", body }
+                { "HTMLPart", "<p>Test</p>" }
             }
         });
 
