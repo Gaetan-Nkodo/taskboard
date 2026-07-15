@@ -35,11 +35,12 @@ public class MailjetEmailSender : IEmailSender
         }
         .Property(Send.Messages, new JArray {
             new JObject {
-                { "From", new JObject { { "Email", _from } } },
+                { "From", new JObject { { "Email", _from }, { "Name", "TaskBoard Support" } } },
                 { "To", new JArray {
-                    new JObject { { "Email", to } }
+                    new JObject { { "Email", to }, { "Name", to } }
                 }},
                 { "Subject", subject },
+                { "TextPart", "Merci d'utiliser TaskBoard." },
                 { "HTMLPart", body }
             }
         });
