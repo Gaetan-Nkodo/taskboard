@@ -30,7 +30,15 @@ public class SmtpEmailSender : IEmailSender
             IsBodyHtml = true
         };
 
-        await client.SendMailAsync(message, ct);
+        try
+        {
+            await client.SendMailAsync(message, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur SMTP lors de l'envoi de l'email");
+            throw;
+        }
 
         File.WriteAllText("sandbox-email-last.html", body);
     }

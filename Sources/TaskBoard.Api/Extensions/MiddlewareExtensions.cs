@@ -9,6 +9,9 @@ public static class MiddlewareExtensions
         app.UseMiddleware<LoggingEnrichmentMiddleware>();
         app.UseMiddleware<RequestLoggingMiddleware>();
 
+        app.UseResponseCaching();
+        app.UseResponseCompression();
+
         // HTTPS seulement hors tests
         var env = app.ApplicationServices.GetRequiredService<IHostEnvironment>();
         if (!env.IsEnvironment("Testing"))

@@ -1,5 +1,7 @@
 using FluentValidation;
 
+using Microsoft.AspNetCore.ResponseCompression;
+
 using TaskBoard.Application.Requests;
 using TaskBoard.Application.Services;
 using TaskBoard.Application.UseCases.Boards;
@@ -17,6 +19,18 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddCustomServices(this IServiceCollection services)
     {
+        services.AddResponseCaching();
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+        services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = System.IO.Compression.CompressionLevel.Optimal;
+        });
+
         // Repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();

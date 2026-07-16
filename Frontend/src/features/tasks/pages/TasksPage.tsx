@@ -10,7 +10,7 @@ interface EnrichedTask extends TaskDto {
   columnName: string;
 }
 
-export function TasksPage() {
+export default function TasksPage() {
   const { boards, loading, error } = useBoards();
 
   const tasks: EnrichedTask[] = useMemo(() => {

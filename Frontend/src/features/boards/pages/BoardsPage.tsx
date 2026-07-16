@@ -6,7 +6,7 @@ import { BoardForm } from "../components/BoardForm";
 import { DeleteBoardModal } from "../components/DeleteBoardModal";
 import type { BoardDto } from "../types/BoardTypes";
 
-export function BoardsPage() {
+export default function BoardsPage() {
   const navigate = useNavigate();
 
   const {

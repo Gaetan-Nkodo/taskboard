@@ -1,14 +1,14 @@
 import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
-import { Container } from "./Container";
 
 export function Layout() {
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
-      <Container>
+
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 md:px-6">
         <Outlet />
-      </Container>
+      </main>
     </div>
   );
 }

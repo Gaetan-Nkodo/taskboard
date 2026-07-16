@@ -1,19 +1,30 @@
 import { createBrowserRouter } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 import LoginPage from "@/features/auth/LoginPage";
+import RegisterPage from "@/features/auth/RegisterPage";
 import ForgotPasswordPage from "@/features/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/features/auth/ResetPasswordPage";
-import { ChangePasswordPage } from "@/features/auth/ChangePasswordPage";
-import RegisterPage from "@/features/auth/RegisterPage";
 import ConfirmEmailPage from "@/features/auth/ConfirmEmailPage";
 import ConfirmEmailSentPage from "@/features/auth/ConfirmEmailSentPage";
+import { ChangePasswordPage } from "@/features/auth/ChangePasswordPage";
 
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute";
-import { BoardsPage } from "@/features/boards/pages/BoardsPage";
-
 import { Layout } from "@/components/layout/Layout";
-import { BoardDetailsPage } from "@/features/boards/pages/BoardDetailsPage";
-import { TasksPage } from "@/features/tasks/pages/TasksPage";
+
+import { DashboardPage } from "@/features/dashboard/DashboardPage";
+
+// Lazy pages (must have export default)
+const BoardsPage = lazy(() => import("@/features/boards/pages/BoardsPage"));
+const BoardDetailsPage = lazy(() => import("@/features/boards/pages/BoardDetailsPage"));
+const TasksPage = lazy(() => import("@/features/tasks/pages/TasksPage"));
+
+// Wrapper to avoid repeating Suspense everywhere
+const Lazy = (Component: React.LazyExoticComponent<any>) => (
+  <Suspense fallback={<div className="p-6">Chargement…</div>}>
+    <Component />
+  </Suspense>
+);
 
 export const router = createBrowserRouter([
   // --- Pages publiques ---
@@ -33,11 +44,14 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <BoardsPage /> },
-      { path: "boards", element: <BoardsPage /> },
-      { path: "boards/:id", element: <BoardDetailsPage  /> },
-      { path: "change-password", element: <ChangePasswordPage /> },
-      { path: "tasks", element: <TasksPage /> }
+      { index: true, element: <DashboardPage /> },
+
+      { path: "boards", element: Lazy(BoardsPage) },
+      { path: "boards/:id", element: Lazy(BoardDetailsPage) },
+
+      { path: "tasks", element: Lazy(TasksPage) },
+
+      { path: "change-password", element: <ChangePasswordPage /> }
     ]
   }
 ]);

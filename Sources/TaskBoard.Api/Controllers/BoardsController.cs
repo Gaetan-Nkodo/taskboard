@@ -42,6 +42,7 @@ public class BoardsController : ControllerBase
     }
 
     [HttpGet]
+    [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetBoards()
     {
         var userId = GetUserId();
@@ -50,6 +51,7 @@ public class BoardsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetBoard(Guid id)
     {
         var userId = GetUserId();
@@ -93,6 +95,7 @@ public class BoardsController : ControllerBase
     }
 
     [HttpGet("{boardId:guid}/tasks")]
+    [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetTasks(Guid boardId)
     {
         var userId = GetUserId();

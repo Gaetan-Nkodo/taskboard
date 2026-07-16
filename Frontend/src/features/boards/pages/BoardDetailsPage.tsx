@@ -18,7 +18,7 @@ import {
 
 import { arrayMove } from "@dnd-kit/sortable";
 
-export function BoardDetailsPage() {
+export default function BoardDetailsPage() {
   const { id: boardId } = useParams<{ id: string }>();
   const boardService = useBoardService();
 
