@@ -1,13 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent
-} from "@/components/ui/card";
+import { AuthLayout } from "@/features/auth/AuthLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -37,24 +31,8 @@ export default function RegisterPage() {
       return;
     }
 
-    // Validation client Standard SaaS
-    const strongRegex = {
-      upper: /[A-Z]/,
-      lower: /[a-z]/,
-      digit: /[0-9]/,
-      special: /[^a-zA-Z0-9]/
-    };
-
-    if (
-      password.length < 8 ||
-      !strongRegex.upper.test(password) ||
-      !strongRegex.lower.test(password) ||
-      !strongRegex.digit.test(password) ||
-      !strongRegex.special.test(password)
-    ) {
-      setError(
-        "Le mot de passe doit contenir 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
-      );
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir 8 caractères.");
       return;
     }
 
@@ -82,87 +60,78 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 animate-fadeIn">
-      <Card className="w-full max-w-md p-6 shadow-xl border border-border/40 bg-card/80 backdrop-blur-md">
-        <CardHeader className="text-center space-y-2">
-          <Avatar className="mx-auto h-16 w-16 shadow-md transition-all duration-300">
-            <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
-              {avatarLetter}
-            </AvatarFallback>
-          </Avatar>
+    <AuthLayout title="Créer un compte">
+      <div className="flex justify-center">
+        <Avatar className="h-16 w-16 shadow-md">
+          <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
+            {avatarLetter}
+          </AvatarFallback>
+        </Avatar>
+      </div>
 
-          <CardTitle className="text-2xl font-bold">Créer un compte</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Accédez à votre espace TaskBoard
-          </CardDescription>
-        </CardHeader>
+      {error && (
+        <div className="mb-4 text-red-600 text-sm text-center">{error}</div>
+      )}
 
-        <CardContent>
-          {error && (
-            <div className="mb-4 text-red-600 text-sm text-center">{error}</div>
-          )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="mt-1"
+          />
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="mt-1"
-              />
-            </div>
+        <div>
+          <Label htmlFor="displayName">Nom affiché</Label>
+          <Input
+            id="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            minLength={3}
+            className="mt-1"
+          />
+        </div>
 
-            <div>
-              <Label htmlFor="displayName">Nom affiché</Label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                minLength={3}
-                className="mt-1"
-              />
-            </div>
+        <div>
+          <Label htmlFor="password">Mot de passe</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="mt-1"
+          />
+        </div>
 
-            <div>
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="mt-1"
-              />
-            </div>
+        <div>
+          <Label htmlFor="confirm">Confirmer le mot de passe</Label>
+          <Input
+            id="confirm"
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            className="mt-1"
+          />
+        </div>
 
-            <div>
-              <Label htmlFor="confirm">Confirmer le mot de passe</Label>
-              <Input
-                id="confirm"
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                className="mt-1"
-              />
-            </div>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Création..." : "Créer le compte"}
+        </Button>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Création..." : "Créer le compte"}
-            </Button>
-
-            <div className="text-center text-sm mt-2">
-              <a href="/login" className="text-primary hover:underline">
-                Déjà inscrit ? Se connecter
-              </a>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="text-center text-sm mt-2">
+          <a href="/login" className="text-primary hover:underline">
+            Déjà inscrit ? Se connecter
+          </a>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

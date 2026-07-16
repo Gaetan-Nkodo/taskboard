@@ -1,10 +1,11 @@
-import { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Card, Input, Button } from "@/components/ui";
-import { useHttp } from "@/core/api/httpClient";
+import { AuthLayout } from "@/features/auth/AuthLayout";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
+import { useState } from "react";
 
 export default function ResetPasswordPage() {
-  const http = useHttp();
   const [params] = useSearchParams();
   const token = params.get("token");
 
@@ -17,83 +18,81 @@ export default function ResetPasswordPage() {
     setError("");
 
     try {
-      await http("/api/v1/auth/reset-password", {
-        method: "POST",
-        body: JSON.stringify({ token, newPassword: password })
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/v1/auth/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, newPassword: password })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
 
       setDone(true);
-
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Erreur inconnue";
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
 
       if (
-        message.includes("Invalid") ||
-        message.includes("401") ||
-        message.includes("400")
+        msg.includes("Invalid") ||
+        msg.includes("401") ||
+        msg.includes("400")
       ) {
         setError("Lien invalide ou expiré.");
       } else {
-        setError(message);
+        setError(msg);
       }
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-sm p-6 animate-fadeIn">
-        <h1 className="text-xl font-bold mb-4">Réinitialiser le mot de passe</h1>
-
-        {done ? (
-          <div className="space-y-4">
-            <div className="text-green-600" aria-label="success-message">
-              Mot de passe mis à jour. Vous pouvez maintenant vous connecter.
-            </div>
-
-            <Link
-              to="/login"
-              aria-label="back-to-login"
-              className="block text-center text-sm text-primary hover:underline"
-            >
-              Retour à la connexion
-            </Link>
+    <AuthLayout title="Réinitialiser le mot de passe">
+      {done ? (
+        <div className="space-y-4">
+          <div className="text-green-600" aria-label="success-message">
+            Mot de passe mis à jour. Vous pouvez maintenant vous connecter.
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="text-red-600 text-sm" aria-label="error-message">
-                {error}
-              </div>
-            )}
 
-            <Input
-              aria-label="password-input"
-              type="password"
-              placeholder="Nouveau mot de passe"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
+          <Link
+            to="/login"
+            aria-label="back-to-login"
+            className="block text-center text-sm text-primary hover:underline"
+          >
+            Retour à la connexion
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="text-red-600 text-sm" aria-label="error-message">
+              {error}
+            </div>
+          )}
 
-            <Button
-              aria-label="submit-button"
-              type="submit"
-              className="w-full"
-            >
-              Mettre à jour
-            </Button>
+          <Input
+            aria-label="password-input"
+            type="password"
+            placeholder="Nouveau mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-            <Link
-              to="/login"
-              aria-label="cancel-link"
-              className="block text-center text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              Retour à la connexion
-            </Link>
-          </form>
-        )}
-      </Card>
-    </div>
+          <Button aria-label="submit-button" className="w-full">
+            Mettre à jour
+          </Button>
+
+          <Link
+            to="/login"
+            aria-label="cancel-link"
+            className="block text-center text-sm text-muted-foreground hover:text-primary"
+          >
+            Retour à la connexion
+          </Link>
+        </form>
+      )}
+    </AuthLayout>
   );
 }
